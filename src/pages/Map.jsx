@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { sendTelegramViaAgent } from '../services/openclawApi';
+import { discoveryEngine } from '../services/discoveryService';
+import { xpService } from '../services/xpService';
+import HiddenDiscoveryOverlay from '../components/HiddenDiscoveryOverlay';
+import LevelUpModal from '../components/LevelUpModal';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -86,6 +90,8 @@ export default function Map() {
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
   const [agentInsight, setAgentInsight] = useState(null);
+  const [activeDiscovery, setActiveDiscovery] = useState(null);
+  const [levelUpData, setLevelUpData] = useState(null);
   const agentsRef = useRef(agents);
 
   // Animate agents wandering in Peru
@@ -139,6 +145,25 @@ export default function Map() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // Simulate Geo-Spatial AI Engine Triggering
+  useEffect(() => {
+    const checkEnvironment = async () => {
+      if (activeDiscovery) return; // Don't trigger if one is already open
+      
+      const profile = JSON.parse(localStorage.getItem('tripclaw_identity') || '{}');
+      const mockEnv = { time: 'night', weather: 'clear', crowdDensity: 'low' };
+      
+      const discovery = await discoveryEngine.evaluateLocation(null, profile, mockEnv);
+      if (discovery) {
+        setActiveDiscovery(discovery);
+      }
+    };
+
+    // Attempt to trigger a discovery every 15 seconds
+    const interval = setInterval(checkEnvironment, 15000);
+    return () => clearInterval(interval);
+  }, [activeDiscovery]);
 
   // Handle city click — invoke trip_analyzer skill explicitly
   const handleCityClick = async (city) => {
@@ -354,6 +379,27 @@ export default function Map() {
           </div>
         </div>
       </div>
+
+      {/* Hidden Discovery Overlay Component */}
+      <HiddenDiscoveryOverlay 
+        discovery={activeDiscovery}
+        onClose={() => setActiveDiscovery(null)}
+        onAccept={(d) => {
+          // Process XP via XpEngine
+          const xpResult = xpService.grantXp(d.rarity === 'Legendary' ? 'discovery_legendary' : 'discovery_common');
+          setActiveDiscovery(null);
+          
+          if (xpResult && xpResult.leveledUp) {
+            setLevelUpData(xpResult);
+          }
+        }}
+      />
+
+      {/* Level Up RPG Modal */}
+      <LevelUpModal 
+        levelData={levelUpData}
+        onClose={() => setLevelUpData(null)}
+      />
     </div>
   );
 }

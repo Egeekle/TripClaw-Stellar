@@ -2,10 +2,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { sendTelegramViaAgent } from '../services/openclawApi';
+import WalletWidget from '../components/WalletWidget';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { status, wsStatus, agentEvents, tools, isConnected, isGatewayOnline, send } = useOpenClaw();
+  const [identity, setIdentity] = useState(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('tripclaw_identity');
+    if (saved) {
+      setIdentity(JSON.parse(saved));
+    }
+  }, []);
 
   // Simulated live feed when gateway is offline (demo mode)
   const [demoEvents, setDemoEvents] = useState([]);
@@ -74,32 +83,30 @@ export default function Dashboard() {
       )}
       {/* Top Navigation Bar */}
       <div className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
-        <div className="flex items-center p-4 pb-2 justify-between">
-          <div className="flex size-12 shrink-0 items-center">
-            {/* OpenClaw Avatar */}
-            <div className="relative">
-              <div className="size-10 rounded-full bg-gradient-to-br from-violet-600 via-fuchsia-500 to-amber-400 flex items-center justify-center shadow-lg shadow-fuchsia-500/20">
-                <span className="material-symbols-outlined text-white text-xl font-bold">smart_toy</span>
-              </div>
-              <span className={`absolute bottom-0 right-0 size-3 rounded-full border-2 border-white dark:border-background-dark ${statusColor[wsStatus]} ${wsStatus === 'connected' ? 'animate-pulse' : ''}`}></span>
-            </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] flex-1 text-center">TripClaw</h2>
-            <div className="flex items-center gap-1">
-              <span className={`size-2 rounded-full ${statusColor[wsStatus]} ${wsStatus === 'connected' ? 'animate-pulse' : ''}`}></span>
-              <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">
-                {statusLabel[wsStatus]}
+        <div className="flex items-center p-4 pb-2 justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`relative flex size-12 items-center justify-center rounded-2xl border-2 transition-colors shadow-lg ${identity ? 'bg-gradient-to-br from-violet-600 to-fuchsia-500 border-fuchsia-400' : isConnected ? 'border-emerald-400 bg-emerald-500/10' : 'border-violet-500/50 bg-violet-500/10'}`}>
+              <span className={`material-symbols-outlined text-white text-xl`}>
+                {identity ? (identity.companion === 'condor' ? 'flight_takeoff' : identity.companion === 'puma' ? 'pets' : identity.companion === 'inca' ? 'map' : 'water') : isConnected ? 'check_circle' : 'neurology'}
               </span>
+              <div className="absolute -bottom-1 -right-1 bg-slate-900 border border-slate-700 text-white text-[9px] font-black px-1.5 rounded-md">
+                Lv.{identity?.level || 1}
+              </div>
+            </div>
+            <div className="flex flex-col items-start">
+              <h2 className="text-slate-900 dark:text-white text-base font-bold leading-tight tracking-tight">
+                {identity ? `@${identity.nickname}` : 'TripClaw'}
+              </h2>
+              <div className="flex items-center gap-1">
+                <span className={`size-2 rounded-full ${statusColor[wsStatus]} ${wsStatus === 'connected' ? 'animate-pulse' : ''}`}></span>
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">
+                  {identity ? `${identity.travelerType} • ${identity.xp} XP` : statusLabel[wsStatus]}
+                </span>
+              </div>
             </div>
           </div>
-          <div className="flex w-12 items-center justify-end">
-            <button
-              onClick={() => navigate('/console')}
-              className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/20 to-fuchsia-500/20 dark:from-violet-600/30 dark:to-fuchsia-500/30 text-violet-600 dark:text-fuchsia-400 border border-violet-200 dark:border-violet-800/50"
-            >
-              <span className="material-symbols-outlined">terminal</span>
-            </button>
+          <div className="flex items-center justify-end">
+            <WalletWidget />
           </div>
         </div>
       </div>

@@ -1,150 +1,263 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
+import { useStellarWallet } from '../hooks/useStellarWallet';
 
-const INTERESTS = [
-  { icon: 'restaurant', label: 'Food & Dining' },
-  { icon: 'landscape', label: 'Nature & Hiking' },
-  { icon: 'museum', label: 'Museums & Culture' },
-  { icon: 'nightlife', label: 'Nightlife' },
-  { icon: 'photo_camera', label: 'Photography' },
-  { icon: 'beach_access', label: 'Beach & Relax' },
+const TRAVELER_TYPES = [
+  { id: 'explorer', label: 'Explorer', icon: 'explore' },
+  { id: 'foodie', label: 'Food Hunter', icon: 'restaurant' },
+  { id: 'luxury', label: 'Luxury Traveler', icon: 'diamond' },
+  { id: 'adventure', label: 'Adventure Seeker', icon: 'hiking' },
+  { id: 'culture', label: 'Culture Scout', icon: 'museum' },
+];
+
+const COMPANIONS = [
+  { id: 'condor', name: 'Condor AI', icon: 'flight_takeoff', desc: 'Overhead views & safety', color: 'from-blue-500 to-indigo-600' },
+  { id: 'puma', name: 'Puma Scout', icon: 'pets', desc: 'Hidden trails & speed', color: 'from-orange-500 to-red-600' },
+  { id: 'inca', name: 'Inca Navigator', icon: 'map', desc: 'History & deep culture', color: 'from-amber-500 to-orange-600' },
+  { id: 'pacific', name: 'Pacific Drone', icon: 'water', desc: 'Coastal & relaxed vibes', color: 'from-cyan-500 to-blue-600' },
 ];
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const { pair, isGatewayOnline } = useOpenClaw();
+  const { publicKey, connect, connecting } = useStellarWallet();
+  
+  const [step, setStep] = useState(1);
   const [pairingCode, setPairingCode] = useState('');
   const [pairingStatus, setPairingStatus] = useState(null);
-  const [pairingResult, setPairingResult] = useState(null);
-  const [selectedInterests, setSelectedInterests] = useState(new Set());
-
-  const toggleInterest = (label) => {
-    setSelectedInterests((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) next.delete(label); else next.add(label);
-      return next;
-    });
-  };
+  
+  const [identity, setIdentity] = useState({
+    nickname: '',
+    travelerType: '',
+    companion: ''
+  });
 
   const handlePair = async () => {
     if (!pairingCode.trim()) return;
     setPairingStatus('pairing');
     const result = await pair(pairingCode.trim());
     setPairingStatus(result && !result.error ? 'success' : 'error');
-    setPairingResult(result);
   };
 
+  const completeOnboarding = () => {
+    // Save the MVP Identity to LocalStorage
+    const userProfile = {
+      ...identity,
+      xp: 0,
+      level: 1,
+      reputationScore: 100,
+      visitedCities: [],
+      unlockedSkills: ['Basic Travel Analyzer'],
+      badges: [],
+      createdAt: new Date().toISOString()
+    };
+    localStorage.setItem('tripclaw_identity', JSON.stringify(userProfile));
+    navigate('/dashboard');
+  };
+
+  const shortWallet = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+
   return (
-    <div className="max-w-[430px] mx-auto min-h-screen flex flex-col relative pb-24">
+    <div className="max-w-[430px] mx-auto min-h-screen flex flex-col relative pb-24 bg-background-light dark:bg-background-dark text-slate-900 dark:text-white">
+      {/* Progress Bar */}
       <div className="flex flex-col gap-3 p-4 pt-8">
         <div className="flex gap-6 justify-between items-center">
-          <p className="text-slate-900 dark:text-white text-base font-medium leading-normal font-display">Agent Setup</p>
-          <span className="material-symbols-outlined text-violet-500">security</span>
+          <p className="text-base font-medium leading-normal font-display">
+            {step === 1 ? 'Connection' : step === 2 ? 'Identity' : 'Companion'}
+          </p>
+          <span className="text-sm font-bold text-violet-500">Step {step} of 3</span>
         </div>
-        <div className="rounded-full bg-slate-200 dark:bg-[#3b4d54]">
-          <div className="h-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500" style={{ width: '50%' }}></div>
+        <div className="rounded-full bg-slate-200 dark:bg-slate-800 h-2 overflow-hidden">
+          <div 
+            className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 transition-all duration-500" 
+            style={{ width: `${(step / 3) * 100}%` }}
+          ></div>
         </div>
-        <p className="text-slate-500 dark:text-[#9db2b9] text-sm font-normal leading-normal">Agent Pairing</p>
       </div>
 
-      <div className="px-4">
-        <h1 className="text-slate-900 dark:text-white tracking-tight text-[32px] font-bold leading-tight pt-6">Connect to ZeroClaw</h1>
-        <p className="text-slate-600 dark:text-slate-300 text-base font-normal leading-normal pt-2">
-          TripClaw connects to your local <strong className="text-violet-500">ZeroClaw</strong> agent for autonomous trip planning and intelligence.
-        </p>
-      </div>
-
-      <div className="p-4">
-        <div className="flex flex-col items-stretch justify-start rounded-xl shadow-lg bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-slate-800 overflow-hidden">
-          <div className="w-full h-48 flex items-center justify-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-900 via-fuchsia-800 to-slate-900"></div>
-            <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-            <div className="absolute top-1/4 left-1/3 w-24 h-24 bg-violet-500/30 rounded-full blur-3xl animate-pulse"></div>
-            <div className="absolute bottom-1/4 right-1/3 w-32 h-32 bg-fuchsia-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-            <div className="relative z-10 flex flex-col items-center">
-              <div className={`w-20 h-20 rounded-2xl bg-white/10 backdrop-blur-xl border flex items-center justify-center mb-2 shadow-2xl transition-all ${isGatewayOnline ? 'border-emerald-400/50 shadow-emerald-500/20' : 'border-white/20'}`}>
-                <span className="material-symbols-outlined text-white text-5xl">{isGatewayOnline ? 'check_circle' : 'neurology'}</span>
-              </div>
-              <span className={`text-xs font-medium uppercase tracking-widest ${isGatewayOnline ? 'text-emerald-300' : 'text-violet-300'}`}>
-                {isGatewayOnline ? '🦀 Gateway Online' : '🦀 ZeroClaw Agent'}
-              </span>
-            </div>
+      {/* STEP 1: Connections */}
+      {step === 1 && (
+        <div className="px-4 flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div>
+            <h1 className="tracking-tight text-[32px] font-bold leading-tight pt-2">Connect & Sync</h1>
+            <p className="text-slate-500 text-base mt-2">
+              Link your local AI agent and your Web3 wallet to unlock the full TripClaw experience.
+            </p>
           </div>
 
-          <div className="flex w-full grow flex-col items-stretch justify-center gap-4 p-5">
-            <div>
-              <p className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">
-                {isGatewayOnline ? 'Gateway Connected!' : 'Pair Your Agent'}
-              </p>
-              <p className="text-slate-500 dark:text-[#9db2b9] text-sm font-normal leading-normal mt-1">
-                {isGatewayOnline
-                  ? 'Your ZeroClaw agent is running and ready.'
-                  : <>ZeroClaw gateway on <code className="text-violet-500 bg-violet-500/10 px-1 py-0.5 rounded text-xs font-mono">localhost:18789</code> — enter the pairing code shown in your terminal.</>}
-              </p>
+          {/* ZeroClaw Gateway */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-violet-500 text-3xl">neurology</span>
+              <div>
+                <h3 className="font-bold text-lg">ZeroClaw Agent</h3>
+                <p className="text-xs text-slate-500">Local autonomous intelligence</p>
+              </div>
             </div>
-
-            {!isGatewayOnline && (
+            
+            {isGatewayOnline ? (
+              <div className="flex items-center gap-2 text-emerald-500 bg-emerald-500/10 p-3 rounded-xl border border-emerald-500/20">
+                <span className="material-symbols-outlined">check_circle</span>
+                <span className="font-bold text-sm">Gateway Connected</span>
+              </div>
+            ) : (
               <div className="flex flex-col gap-3">
-                <div className="flex gap-2">
-                  <input type="text" value={pairingCode} onChange={(e) => setPairingCode(e.target.value)} placeholder="Enter 6-digit pairing code" maxLength={6}
-                    className="flex-1 h-12 px-4 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-center text-xl font-mono font-bold tracking-[0.3em] placeholder:text-slate-400 placeholder:text-sm placeholder:tracking-normal placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500"
-                    onKeyDown={(e) => e.key === 'Enter' && handlePair()} />
-                  <button onClick={handlePair} disabled={!pairingCode.trim() || pairingStatus === 'pairing'}
-                    className="h-12 px-5 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-bold disabled:opacity-40 active:scale-95 transition-all shadow-lg shadow-violet-500/20">
-                    {pairingStatus === 'pairing' ? <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span> : 'Pair'}
-                  </button>
-                </div>
-                {pairingStatus === 'success' && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-800/50">
-                    <span className="material-symbols-outlined text-emerald-600 dark:text-emerald-400 text-sm">check_circle</span>
-                    <p className="text-emerald-700 dark:text-emerald-400 text-xs font-medium">Paired! Copy the token to your <code className="font-mono">.env</code> file and restart.</p>
-                  </div>
-                )}
-                {pairingStatus === 'error' && (
-                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-800/50">
-                    <span className="material-symbols-outlined text-red-600 dark:text-red-400 text-sm">error</span>
-                    <p className="text-red-700 dark:text-red-400 text-xs font-medium">{pairingResult?.error || 'Pairing failed. Check the code and try again.'}</p>
-                  </div>
-                )}
-                <p className="text-slate-400 text-[10px] text-center">
-                  Run <code className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">POST /pair</code> with <code className="font-mono bg-slate-100 dark:bg-slate-800 px-1 rounded">X-Pairing-Code</code> header
-                </p>
+                <input type="text" value={pairingCode} onChange={(e) => setPairingCode(e.target.value)} placeholder="6-digit code" maxLength={6}
+                  className="w-full h-12 px-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-center text-xl font-mono tracking-widest focus:ring-2 focus:ring-violet-500 outline-none" />
+                <button onClick={handlePair} disabled={!pairingCode.trim() || pairingStatus === 'pairing'}
+                  className="w-full h-12 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold">
+                  {pairingStatus === 'pairing' ? 'Pairing...' : 'Pair Agent'}
+                </button>
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Interest Tags — now interactive */}
-      <div className="px-4">
-        <h3 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight pt-4">What are you exploring?</h3>
-        <p className="text-slate-500 dark:text-[#9db2b9] text-sm mb-4">Choose interests to help your agent personalize recommendations.</p>
-        <div className="flex flex-wrap gap-2 pb-6">
-          {INTERESTS.map((item) => (
-            <button key={item.label} onClick={() => toggleInterest(item.label)}
-              className={`px-4 py-2 rounded-full border text-sm font-medium flex items-center gap-1 transition-all ${
-                selectedInterests.has(item.label)
-                  ? 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-400'
-                  : 'border-slate-200 dark:border-slate-700 bg-transparent text-slate-600 dark:text-slate-300 hover:border-violet-400/50'
-              }`}>
-              <span className="material-symbols-outlined text-sm">{item.icon}</span>
-              {item.label}
+          {/* Stellar Wallet */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 shadow-lg">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-symbols-outlined text-indigo-500 text-3xl">account_balance_wallet</span>
+              <div>
+                <h3 className="font-bold text-lg">Stellar Wallet</h3>
+                <p className="text-xs text-slate-500">For Reputation & Swarm Voting</p>
+              </div>
+            </div>
+
+            {publicKey ? (
+              <div className="flex items-center justify-between text-indigo-500 bg-indigo-500/10 p-3 rounded-xl border border-indigo-500/20">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                  <span className="font-mono font-bold text-sm">{shortWallet(publicKey)}</span>
+                </div>
+                <span className="material-symbols-outlined">check_circle</span>
+              </div>
+            ) : (
+              <button onClick={connect} disabled={connecting}
+                className="w-full h-12 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-colors">
+                {connecting ? 'Connecting...' : 'Connect Freighter'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* STEP 2: Identity */}
+      {step === 2 && (
+        <div className="px-4 flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div>
+            <h1 className="tracking-tight text-[32px] font-bold leading-tight pt-2">Traveler Identity</h1>
+            <p className="text-slate-500 text-base mt-2">
+              How should the Swarm know you? Your identity dictates your starting skills and network reputation.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-bold ml-1">Nickname</label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">@</span>
+              <input 
+                type="text" 
+                placeholder="AndeanNomad"
+                value={identity.nickname}
+                onChange={(e) => setIdentity({...identity, nickname: e.target.value.replace(/\s+/g, '')})}
+                className="w-full h-14 pl-10 pr-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-bold text-lg focus:ring-2 focus:ring-violet-500 outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <label className="text-sm font-bold ml-1">Traveler Type</label>
+            <div className="grid grid-cols-2 gap-3">
+              {TRAVELER_TYPES.map(type => (
+                <button 
+                  key={type.id}
+                  onClick={() => setIdentity({...identity, travelerType: type.id})}
+                  className={`flex flex-col items-center justify-center p-4 rounded-2xl border-2 transition-all ${
+                    identity.travelerType === type.id 
+                      ? 'border-violet-500 bg-violet-500/10 text-violet-600 dark:text-violet-400 shadow-md scale-[1.02]' 
+                      : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800/50 text-slate-500 hover:border-violet-300'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-3xl mb-2">{type.icon}</span>
+                  <span className="text-xs font-bold text-center">{type.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: Companion */}
+      {step === 3 && (
+        <div className="px-4 flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
+          <div>
+            <h1 className="tracking-tight text-[32px] font-bold leading-tight pt-2">Choose Companion</h1>
+            <p className="text-slate-500 text-base mt-2">
+              Select your AI Agent persona. This will represent your node on the global map.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {COMPANIONS.map(comp => (
+              <button 
+                key={comp.id}
+                onClick={() => setIdentity({...identity, companion: comp.id})}
+                className={`w-full flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+                  identity.companion === comp.id 
+                    ? 'border-fuchsia-500 bg-white dark:bg-slate-800 shadow-xl scale-[1.02]' 
+                    : 'border-transparent bg-slate-100 dark:bg-slate-800/50 opacity-70 hover:opacity-100'
+                }`}
+              >
+                <div className={`size-14 rounded-xl bg-gradient-to-br ${comp.color} flex items-center justify-center text-white shadow-lg shrink-0`}>
+                  <span className="material-symbols-outlined text-2xl">{comp.icon}</span>
+                </div>
+                <div className="text-left flex-1">
+                  <h3 className="font-bold text-lg">{comp.name}</h3>
+                  <p className="text-xs text-slate-500">{comp.desc}</p>
+                </div>
+                {identity.companion === comp.id && (
+                  <span className="material-symbols-outlined text-fuchsia-500">check_circle</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Actions */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-4 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light dark:via-background-dark to-transparent z-50">
+        <div className="flex gap-3">
+          {step > 1 && (
+            <button 
+              onClick={() => setStep(step - 1)}
+              className="w-14 h-14 rounded-xl bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 font-bold shrink-0 active:scale-95 transition-transform"
+            >
+              <span className="material-symbols-outlined">arrow_back</span>
             </button>
-          ))}
+          )}
+          
+          <button 
+            onClick={() => {
+              if (step === 1) setStep(2);
+              else if (step === 2 && identity.nickname && identity.travelerType) setStep(3);
+              else if (step === 3 && identity.companion) completeOnboarding();
+            }}
+            disabled={
+              (step === 2 && (!identity.nickname || !identity.travelerType)) ||
+              (step === 3 && !identity.companion)
+            }
+            className="flex-1 flex cursor-pointer items-center justify-center rounded-xl h-14 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-lg font-bold shadow-lg shadow-violet-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+          >
+            {step === 3 ? 'Start Exploring' : 'Continue'}
+          </button>
         </div>
-      </div>
-
-      {/* Sticky Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-4 bg-gradient-to-t from-background-light dark:from-background-dark via-background-light dark:via-background-dark to-transparent">
-        <button onClick={() => navigate('/dashboard')}
-          className="w-full flex cursor-pointer items-center justify-center rounded-xl h-14 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-lg font-bold shadow-lg shadow-violet-500/20 active:scale-[0.98] transition-transform">
-          {isGatewayOnline ? 'Launch Dashboard' : 'Get Started'}
-        </button>
-        <div className="flex items-center justify-center gap-1 mt-3">
-          <span className="material-symbols-outlined text-[12px] text-slate-400">lock</span>
-          <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Local-first · Your data stays on your machine</p>
-        </div>
+        
+        {step === 1 && (
+          <div className="flex items-center justify-center gap-1 mt-3">
+            <span className="material-symbols-outlined text-[12px] text-slate-400">lock</span>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-medium">Web3 & Local AI Ready</p>
+          </div>
+        )}
       </div>
     </div>
   );
