@@ -5,6 +5,8 @@ const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Map = lazy(() => import('./pages/Map'));
 const AgentConsole = lazy(() => import('./pages/AgentConsole'));
+const Payment = lazy(() => import('./pages/Payment'));
+const Vote = lazy(() => import('./pages/Vote'));
 
 // ── Error Boundary ──────────────────────────────────────────
 class ErrorBoundary extends Component {
@@ -83,6 +85,8 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<Map />} />
           <Route path="/console" element={<AgentConsole />} />
+          <Route path="/payment" element={<Payment />} />
+          <Route path="/vote" element={<Vote />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

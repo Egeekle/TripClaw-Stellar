@@ -1,25 +1,82 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { sendTelegramViaAgent } from '../services/openclawApi';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix leaflet default icon issues if any, though we use custom ones
+delete L.Icon.Default.prototype._getIconUrl;
 
 const DEMO_AGENTS = [
-  { id: 'oc-1', x: 48, y: 30, sentiment: 92, name: 'Scout-α' },
-  { id: 'oc-2', x: 85, y: 40, sentiment: 78, name: 'Navigator-β' },
-  { id: 'oc-3', x: 52, y: 35, sentiment: 88, name: 'Analyst-γ' },
-  { id: 'oc-4', x: 55, y: 38, sentiment: 65, name: 'Sentinel-δ' },
-  { id: 'oc-5', x: 25, y: 32, sentiment: 95, name: 'Curator-ε' },
-  { id: 'oc-6', x: 70, y: 45, sentiment: 72, name: 'Pathfinder-ζ' },
+  { id: 'oc-1', lat: -13.5, lng: -72.0, sentiment: 92, name: 'Scout-α' },
+  { id: 'oc-2', lat: -12.1, lng: -77.0, sentiment: 78, name: 'Navigator-β' },
+  { id: 'oc-3', lat: -15.5, lng: -71.5, sentiment: 88, name: 'Analyst-γ' },
+  { id: 'oc-4', lat: -14.0, lng: -75.0, sentiment: 65, name: 'Sentinel-δ' },
+  { id: 'oc-5', lat: -10.0, lng: -76.0, sentiment: 95, name: 'Curator-ε' },
+  { id: 'oc-6', lat: -5.0, lng: -73.0, sentiment: 72, name: 'Pathfinder-ζ' },
 ];
 
-const CITIES = [
-  { id: 'paris', name: 'Paris (Eiffel Tower)', top: '30%', left: '48%', icon: 'tour' },
-  { id: 'tokyo', name: 'Tokyo (Shibuya)', top: '40%', left: '85%', icon: 'festival' },
-  { id: 'rome', name: 'Rome (Colosseum)', top: '35%', left: '52%', icon: 'account_balance' },
-  { id: 'santorini', name: 'Santorini (Oia)', top: '38%', left: '55%', icon: 'sailing' },
-  { id: 'newyork', name: 'New York (Times Sq)', top: '32%', left: '25%', icon: 'location_city' },
-  { id: 'bali', name: 'Bali (Ubud)', top: '52%', left: '78%', icon: 'spa' },
+const SWARMS = [
+  { id: 'cusco', name: 'Cusco Backpackers', type: 'Adventure', lat: -13.1631, lng: -72.5450, icon: 'hiking', color: 'bg-emerald-600', members: 4 },
+  { id: 'lima', name: 'Lima Food Hunters', type: 'Gastronomy', lat: -12.1211, lng: -77.0294, icon: 'ramen_dining', color: 'bg-orange-600', members: 6 },
+  { id: 'arequipa', name: 'Arequipa Explorers', type: 'Nature', lat: -15.6074, lng: -71.8690, icon: 'volcano', color: 'bg-red-600', members: 3 },
+  { id: 'puno', name: 'Lake Titicaca Nomads', type: 'Culture', lat: -15.8402, lng: -70.0219, icon: 'sailing', color: 'bg-blue-600', members: 5 },
+  { id: 'iquitos', name: 'Amazon River Expeditions', type: 'Wilderness', lat: -3.7491, lng: -73.2243, icon: 'forest', color: 'bg-green-700', members: 2 },
+  { id: 'nazca', name: 'Nazca Flyers', type: 'History', lat: -14.8288, lng: -74.9436, icon: 'flight', color: 'bg-violet-600', members: 8 },
 ];
+
+const createSwarmIcon = (swarm) => {
+  return L.divIcon({
+    className: 'bg-transparent border-none',
+    html: `
+      <div class="flex flex-col items-center cursor-pointer hover:scale-110 transition-transform relative -top-6 -left-1/2 min-w-max group">
+        <div class="relative ${swarm.color}/90 text-white w-10 h-10 rounded-full flex items-center justify-center border-2 border-white shadow-xl backdrop-blur-sm z-10">
+          <span class="material-symbols-outlined text-xl">${swarm.icon}</span>
+          <span class="absolute -top-2 -right-2 bg-slate-900 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border border-white">${swarm.members}</span>
+        </div>
+        <div class="mt-1 px-3 py-1.5 bg-white/95 rounded-xl border border-slate-200 backdrop-blur-sm text-center shadow-lg group-hover:border-violet-400 transition-colors">
+          <div class="text-[11px] font-black text-slate-900 whitespace-nowrap">${swarm.name}</div>
+          <div class="text-[9px] font-bold text-violet-500 uppercase tracking-widest mt-0.5">Join Swarm</div>
+        </div>
+      </div>
+    `,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+  });
+};
+
+const createAgentIcon = (agent, interaction) => {
+  const confidenceBadge = agent.sentiment > 85 
+    ? `<div class="mt-1 px-1 bg-white/90 rounded border border-emerald-500 backdrop-blur-sm text-[8px] font-bold text-emerald-600 whitespace-nowrap shadow-sm">High Confidence</div>` 
+    : '';
+
+  const bubble = interaction 
+    ? `<div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-white text-slate-800 text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg border border-violet-200 whitespace-nowrap z-20 animate-bounce">
+        ${interaction}
+        <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rotate-45 border-b border-r border-violet-200"></div>
+      </div>`
+    : '';
+
+  return L.divIcon({
+    className: 'bg-transparent border-none',
+    html: `
+      <div class="absolute flex flex-col items-center relative -top-3 -left-3 transition-all">
+        ${bubble}
+        <div class="relative cursor-pointer hover:scale-125 transition-transform group" title="${agent.name} — Sentiment: ${Math.round(agent.sentiment)}%">
+          <div class="absolute -inset-2 rounded-full bg-violet-500/40 blur-md animate-pulse"></div>
+          <div class="relative bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
+            <span class="material-symbols-outlined text-[10px]">smart_toy</span>
+          </div>
+        </div>
+        ${confidenceBadge}
+      </div>
+    `,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+  });
+};
 
 export default function Map() {
   const navigate = useNavigate();
@@ -29,23 +86,22 @@ export default function Map() {
   const [telegramEnabled, setTelegramEnabled] = useState(false);
   const [selectedCity, setSelectedCity] = useState(null);
   const [agentInsight, setAgentInsight] = useState(null);
-  const [mapScale, setMapScale] = useState(1);
   const agentsRef = useRef(agents);
 
-  // Animate agents wandering
+  // Animate agents wandering in Peru
   useEffect(() => {
     const interval = setInterval(() => {
       setAgents((prev) => {
         const next = prev.map((agent) => ({
           ...agent,
-          x: Math.max(5, Math.min(95, agent.x + (Math.random() - 0.5) * 3)),
-          y: Math.max(20, Math.min(70, agent.y + (Math.random() - 0.5) * 2)),
+          lat: Math.max(-18, Math.min(0, agent.lat + (Math.random() - 0.5) * 0.5)),
+          lng: Math.max(-81, Math.min(-68, agent.lng + (Math.random() - 0.5) * 0.5)),
           sentiment: Math.max(30, Math.min(100, agent.sentiment + (Math.random() - 0.48) * 5)),
         }));
         agentsRef.current = next;
         return next;
       });
-    }, 2000);
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -53,16 +109,16 @@ export default function Map() {
   useEffect(() => {
     if (agents.length === 0) return;
     const messages = [
-      '🗼 Eiffel Tower queue: 45 min',
-      '🍣 Found hidden ramen spot!',
-      '🏛️ Colosseum best at sunset',
-      '⛵ Boat tour: €35/person',
-      '📸 Best photo spot found!',
-      '☕ Amazing local café nearby',
-      '🎭 Street performance starting',
-      '🌅 Perfect viewing time: 6:30 PM',
-      '⚠️ Pickpocket alert in area',
-      '🎉 Local festival today!',
+      '🗻 Machu Picchu is breathtaking',
+      '🏄‍♂️ Great waves in Miraflores',
+      '🦅 Condor spotted in Colca Canyon',
+      '🚤 Lake Titicaca boat tour starting',
+      '🐒 Amazing Amazon jungle walk!',
+      '🛩️ Nazca Lines flight: $80',
+      '🍹 Trying an authentic Pisco Sour',
+      '🥘 Delicious Ceviche found in Lima',
+      '⚠️ Remember to acclimatize in Cusco',
+      '🎉 Inti Raymi festival preparations!',
     ];
 
     const interval = setInterval(() => {
@@ -79,7 +135,7 @@ export default function Map() {
           return next;
         });
       }, 4000);
-    }, 2500);
+    }, 3500);
 
     return () => clearInterval(interval);
   }, []);
@@ -89,14 +145,12 @@ export default function Map() {
     setSelectedCity(city);
     setAgentInsight({ loading: true, city: city.name });
 
-    // Use explicit skill invocation with trip_analyzer
     const result = await runSkill(
       'trip_analyzer',
       { destination: city.name, action: 'full_analysis' },
       `Analyze ${city.name} for tourist insights, safety, costs, and local recommendations`
     );
 
-    // Extract response text from result
     const text = result?.result || result?.content || result?.text;
     if (text && !result?.error && !result?.demo) {
       setAgentInsight({ loading: false, city: city.name, text });
@@ -118,8 +172,8 @@ export default function Map() {
   return (
     <div className="relative flex h-screen w-full flex-col overflow-hidden font-display text-slate-900 dark:text-white bg-background-light dark:bg-background-dark">
       {/* Top HUD */}
-      <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-white/90 dark:from-background-dark/90 to-transparent p-4">
-        <div className="flex items-center justify-between mb-4 mt-2">
+      <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-b from-white/90 dark:from-background-dark/90 to-transparent p-4 pointer-events-none">
+        <div className="flex items-center justify-between mb-4 mt-2 pointer-events-auto">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/dashboard')}
@@ -128,7 +182,7 @@ export default function Map() {
               <span className="material-symbols-outlined">arrow_back_ios_new</span>
             </button>
             <div>
-              <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">Global Explorer Map</h2>
+              <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">Peru Explorer Map</h2>
               <p className="text-violet-500 text-xs font-medium uppercase tracking-widest flex items-center gap-1">
                 OpenClaw Swarm
                 {isConnected && (
@@ -152,7 +206,7 @@ export default function Map() {
         </div>
 
         {/* Stats Row */}
-        <div className="flex gap-3">
+        <div className="flex gap-3 pointer-events-auto">
           <div className="flex flex-1 flex-col gap-1 rounded-xl p-3 bg-white/60 dark:bg-background-dark/60 border border-slate-200 dark:border-white/10 backdrop-blur-md shadow-sm">
             <p className="text-slate-500 dark:text-[#9db2b9] text-[10px] font-bold uppercase tracking-wider">Active Agents</p>
             <div className="flex items-baseline gap-1">
@@ -172,91 +226,49 @@ export default function Map() {
         </div>
       </div>
 
-      {/* Map Layer */}
-      <div className="relative flex-1 bg-slate-200 dark:bg-background-dark">
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-300"
-          style={{
-            backgroundImage:
-              'url("https://lh3.googleusercontent.com/aida-public/AB6AXuB64f9eh3uPzbFyCqCz-0AfKFHQ0UXRglW1t5tU_X0MnaGW-gNAFwwrbzDagR6k8e1JikvWQR5bCcxJMQ7gyilc5G_eTWXpYHjsWIxA-dexa9D61BR0kzxWWBlkoHtqERHQ_21GrO4_PVENt19EAJdXNARIVErXR8EB65lwliHjlTINeVjvh-klK5WKi-9Lm-F8lAoD0EG-eI_YT_nBMJsuzcjgHAbDY0Mg5Iwq4sd_rOKr-Au_3pamEGfkYkKIuZ6e_laWTpZyPXU")',
-            transform: `scale(${mapScale})`,
-          }}
+      {/* Interactive Map Layer */}
+      <div className="absolute inset-0 z-0">
+        <MapContainer 
+          center={[-9.19, -75.01]} // Center of Peru
+          zoom={6} 
+          scrollWheelZoom={true} 
+          className="w-full h-full"
+          zoomControl={false}
         >
-          {/* Fog overlay */}
-          <div className="absolute inset-0 bg-white/60 dark:bg-black/40 backdrop-grayscale"></div>
-          <div className="absolute inset-0 fog-overlay mix-blend-multiply dark:mix-blend-normal"></div>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          />
 
-          {/* OpenClaw Swarm Agents */}
+          {/* Render Travel Swarms */}
+          {SWARMS.map((swarm) => (
+            <Marker 
+              key={swarm.id} 
+              position={[swarm.lat, swarm.lng]} 
+              icon={createSwarmIcon(swarm)}
+              eventHandlers={{
+                click: () => navigate('/payment', { state: { swarm } }),
+              }}
+            />
+          ))}
+
+          {/* Render Agents */}
           {agents.map((agent) => (
-            <div
+            <Marker 
               key={agent.id}
-              className="absolute transition-all duration-1000 ease-in-out flex flex-col items-center z-10"
-              style={{ left: `${agent.x}%`, top: `${agent.y}%` }}
-            >
-              {/* Interaction Bubble */}
-              {interactions[agent.id] && (
-                <div className="absolute -top-12 bg-white dark:bg-slate-800 text-slate-800 dark:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg border border-violet-200 dark:border-violet-700 whitespace-nowrap z-20 animate-bounce">
-                  {interactions[agent.id]}
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white dark:bg-slate-800 rotate-45 border-b border-r border-violet-200 dark:border-violet-700"></div>
-                </div>
-              )}
-
-              <div
-                className="relative cursor-pointer hover:scale-125 transition-transform"
-                onClick={() => setInteractions((prev) => ({ ...prev, [agent.id]: `${agent.name}: Scanning area...` }))}
-                title={`${agent.name} — Sentiment: ${Math.round(agent.sentiment)}%`}
-              >
-                <div className="absolute -inset-2 rounded-full bg-violet-500/40 blur-md animate-pulse"></div>
-                <div className="relative bg-gradient-to-br from-violet-600 to-fuchsia-500 text-white size-6 rounded-full flex items-center justify-center border-2 border-white shadow-lg">
-                  <span className="material-symbols-outlined text-xs">smart_toy</span>
-                </div>
-              </div>
-              {agent.sentiment > 85 && (
-                <div className="mt-1 px-1 bg-white/90 dark:bg-background-dark/80 rounded border border-emerald-500 backdrop-blur-sm text-[8px] font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap shadow-sm">
-                  High Confidence
-                </div>
-              )}
-            </div>
+              position={[agent.lat, agent.lng]}
+              icon={createAgentIcon(agent, interactions[agent.id])}
+              eventHandlers={{
+                click: () => setInteractions((prev) => ({ ...prev, [agent.id]: `${agent.name}: Scanning area...` }))
+              }}
+            />
           ))}
-
-          {/* City Landmarks */}
-          {CITIES.map((city) => (
-            <div
-              key={city.id}
-              className="absolute flex flex-col items-center z-0 cursor-pointer hover:scale-110 transition-transform"
-              style={{ top: city.top, left: city.left }}
-              onClick={() => handleCityClick(city)}
-            >
-              <div className="relative bg-blue-600/80 text-white size-8 rounded-full flex items-center justify-center border-2 border-white shadow-lg backdrop-blur-sm">
-                <span className="material-symbols-outlined text-lg">{city.icon}</span>
-              </div>
-              <div className="mt-2 px-2 py-1 bg-white/90 dark:bg-background-dark/80 rounded border border-blue-500 backdrop-blur-sm text-[10px] font-bold text-slate-900 dark:text-white whitespace-nowrap shadow-md">
-                {city.name}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Map Controls */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-10">
-          <div className="flex flex-col rounded-xl bg-white/80 dark:bg-background-dark/80 border border-slate-200 dark:border-white/10 backdrop-blur-md overflow-hidden shadow-sm">
-            <button onClick={() => setMapScale((s) => Math.min(s + 0.25, 3))} className="flex size-12 items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white">
-              <span className="material-symbols-outlined">add</span>
-            </button>
-            <div className="h-[1px] bg-slate-200 dark:bg-white/10 mx-2"></div>
-            <button onClick={() => setMapScale((s) => Math.max(s - 0.25, 0.5))} className="flex size-12 items-center justify-center hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white">
-              <span className="material-symbols-outlined">remove</span>
-            </button>
-          </div>
-          <button className="flex size-12 items-center justify-center rounded-xl bg-white/80 dark:bg-background-dark/80 border border-slate-200 dark:border-white/10 backdrop-blur-md text-violet-500 shadow-sm">
-            <span className="material-symbols-outlined">near_me</span>
-          </button>
-        </div>
+        </MapContainer>
       </div>
 
       {/* Agent Insight Modal */}
       {agentInsight && (
-        <div className="absolute inset-x-0 top-1/3 z-30 px-4">
+        <div className="absolute inset-x-0 top-1/3 z-[2000] px-4 pointer-events-auto">
           <div className="bg-white/95 dark:bg-[#1c2427]/95 backdrop-blur-2xl border border-violet-200 dark:border-violet-800/50 rounded-2xl p-5 shadow-2xl max-w-md mx-auto">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -281,14 +293,14 @@ export default function Map() {
                 <span className="text-sm">Agent analyzing...</span>
               </div>
             ) : (
-              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">{agentInsight.text}</p>
+              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{agentInsight.text}</p>
             )}
           </div>
         </div>
       )}
 
       {/* Bottom Controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 pointer-events-none p-4 pb-8 flex flex-col gap-4">
+      <div className="absolute bottom-0 left-0 right-0 z-[1000] pointer-events-none p-4 pb-8 flex flex-col gap-4">
         {/* FAB */}
         <div className="flex justify-end pointer-events-auto">
           <button

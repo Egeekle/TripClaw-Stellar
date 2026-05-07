@@ -14,8 +14,8 @@ const tripAnalyzer = (params) => {
   const dest = params.destination || params.query || 'Unknown destination';
 
   const safetyScores = {
-    'Paris': 82, 'Tokyo': 95, 'Rome': 76, 'Santorini': 90,
-    'New York': 74, 'Bali': 85, 'London': 80, 'Bangkok': 72,
+    'Cusco': 88, 'Lima': 70, 'Arequipa': 85, 'Puno': 78,
+    'Iquitos': 72, 'Nazca': 82, 'Trujillo': 68, 'Piura': 75,
   };
 
   const matchedCity = Object.keys(safetyScores).find(
@@ -89,17 +89,17 @@ const localRecommender = (params) => {
 
   const categories = {
     food: [
-      { name: 'Hidden Garden Café', type: 'Café', rating: '4.8★', price: '$$', note: 'Try the house-blend pour-over' },
-      { name: 'Nonna\'s Kitchen', type: 'Local Cuisine', rating: '4.9★', price: '$', note: 'Authentic family recipes since 1952' },
-      { name: 'Rooftop Sushi Bar', type: 'Japanese Fusion', rating: '4.7★', price: '$$$', note: 'Sunset views + omakase' },
+      { name: 'Cevichería El Muelle', type: 'Seafood', rating: '4.8★', price: '$$', note: 'Best fresh ceviche and leche de tigre' },
+      { name: 'Picantería La Tradición', type: 'Local Cuisine', rating: '4.9★', price: '$', note: 'Authentic Rocoto Relleno & Chicha de Jora' },
+      { name: 'Andean Fusion', type: 'Fine Dining', rating: '4.7★', price: '$$$', note: 'Alpaca steak and quinoa risottos' },
     ],
     culture: [
-      { name: 'Street Art District', type: 'Free Walking Tour', rating: '4.6★', price: 'Free', note: 'Self-guided, best on weekday mornings' },
-      { name: 'Artisan Market', type: 'Local Market', rating: '4.5★', price: '$', note: 'Saturdays 8AM-2PM, handmade crafts' },
+      { name: 'Historical Center Walk', type: 'Free Walking Tour', rating: '4.6★', price: 'Free', note: 'Self-guided colonial architecture tour' },
+      { name: 'Artisan Market San Pedro', type: 'Local Market', rating: '4.5★', price: '$', note: 'Textiles, fresh juices, and local crafts' },
     ],
     hidden: [
-      { name: 'Secret Viewpoint', type: 'Lookout', rating: '4.9★', price: 'Free', note: 'Locals-only spot, 10min hike' },
-      { name: 'Underground Jazz Club', type: 'Nightlife', rating: '4.8★', price: '$$', note: 'Live music Thu-Sat from 9PM' },
+      { name: 'Inca Ruins Viewpoint', type: 'Lookout', rating: '4.9★', price: 'Free', note: 'Locals-only sunset spot, 15min hike' },
+      { name: 'Underground Peña', type: 'Nightlife / Live Music', rating: '4.8★', price: '$$', note: 'Live Afro-Peruvian music Thu-Sat' },
     ],
   };
 
@@ -140,9 +140,9 @@ const itineraryBuilder = (params) => {
   const dest = params.destination || params.query || 'your destination';
 
   const activities = [
-    ['🏛️ Morning: Historic district walking tour', '🍽️ Lunch: Local market food crawl', '📸 Afternoon: Photography at viewpoint', '🌅 Evening: Sunset cruise'],
-    ['🧘 Morning: Yoga at local studio', '☕ Brunch: Award-winning café', '🎨 Afternoon: Art museum + gallery hop', '🍷 Evening: Wine tasting experience'],
-    ['🥾 Morning: Nature trail hike', '🍜 Lunch: Street food adventure', '🏖️ Afternoon: Beach / park relaxation', '🎭 Evening: Live performance or night market'],
+    ['🏛️ Morning: Colonial district walking tour', '🍽️ Lunch: Local market food crawl (try Ceviche)', '📸 Afternoon: Photography at main plaza', '🌅 Evening: Pisco Sour tasting'],
+    ['🧘 Morning: Andean weaving workshop', '☕ Brunch: Local café with organic coffee', '🎨 Afternoon: Pre-Columbian art museum', '🍷 Evening: Fine dining with local ingredients'],
+    ['🥾 Morning: Nearby ruins or nature hike', '🍜 Lunch: Street food or local Picantería', '🛍️ Afternoon: Artisan craft shopping', '🎭 Evening: Folklore dance performance'],
   ];
 
   const budget = { accommodation: Math.floor(60 + Math.random() * 140), food: Math.floor(30 + Math.random() * 70), activities: Math.floor(20 + Math.random() * 80), transport: Math.floor(10 + Math.random() * 40) };

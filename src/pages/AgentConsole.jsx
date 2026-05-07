@@ -40,10 +40,10 @@ export default function AgentConsole() {
   };
 
   const quickCommands = [
-    { label: '📍 Analyze Paris', skill: 'trip_analyzer', query: 'Analyze Paris for safety, crowd levels, costs, and hidden gems' },
-    { label: '🗺️ Plan Tokyo Trip', skill: 'itinerary_builder', query: 'Create a 3-day itinerary for Tokyo focusing on food, culture, and photography' },
-    { label: '☀️ Rome Weather', skill: 'weather_forecast', query: 'Weather forecast for Rome this week' },
-    { label: '💎 Hidden Gems', skill: 'local_recommender', query: 'Best hidden restaurants and local experiences in Bali' },
+    { label: '📍 Analyze Cusco', skill: 'trip_analyzer', query: 'Analyze Cusco for safety, altitude sickness tips, costs, and hidden gems' },
+    { label: '🗺️ Plan Lima Trip', skill: 'itinerary_builder', query: 'Create a 3-day itinerary for Lima focusing on gastronomy and culture' },
+    { label: '☀️ Arequipa Weather', skill: 'weather_forecast', query: 'Weather forecast for Arequipa this week' },
+    { label: '💎 Hidden Gems', skill: 'local_recommender', query: 'Best hidden restaurants and local experiences in the Sacred Valley' },
   ];
 
   return (

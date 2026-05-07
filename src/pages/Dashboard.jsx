@@ -19,22 +19,19 @@ export default function Dashboard() {
   useEffect(() => {
     if (isGatewayOnline && agentEvents.length > 0) return; // Use real events
 
-    const agents = ['Scout-α', 'Navigator-β', 'Analyst-γ', 'Sentinel-δ', 'Curator-ε'];
-    const actions = [
-      'analyzed tourist flow at Eiffel Tower corridor',
-      'flagged price anomaly at local market district',
-      'discovered hidden gem restaurant via sentiment scan',
-      'updated safety corridor near central transit hub',
-      'compiled weather-adjusted itinerary recommendations',
-      'detected crowd surge at popular attraction point',
+    const intents = [
+      { agent: 'Carlos', action: 'wants to hike tomorrow in Sacred Valley', type: 'Adventure' },
+      { agent: 'Ana & Luis', action: 'looking for a foodie group in Lima tonight', type: 'Food' },
+      { agent: '2 Travelers', action: 'going surfing in Miraflores, 1 spot left', type: 'Sports' },
+      { agent: 'Elena', action: 'searching for ride-share to Colca Canyon', type: 'Transport' },
+      { agent: 'Marc', action: 'wants to split a guide for Machu Picchu', type: 'Culture' },
     ];
 
     const interval = setInterval(() => {
-      const randomAgent = agents[Math.floor(Math.random() * agents.length)];
-      const randomAction = actions[Math.floor(Math.random() * actions.length)];
+      const randomIntent = intents[Math.floor(Math.random() * intents.length)];
 
       setDemoEvents((prev) => [
-        { id: Date.now(), agent: `${randomAgent} (OpenClaw)`, action: randomAction, time: 'Just now' },
+        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Just now' },
         ...prev.map((e) => ({ ...e, time: e.time === 'Just now' ? '1m ago' : e.time })).slice(0, 4),
       ]);
     }, 3500);
@@ -277,10 +274,38 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* Swarm Voting */}
+        <section>
+          <div className="flex items-center justify-between px-1 mb-3">
+            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Swarm Voting</h2>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded">On-Chain</span>
+          </div>
+          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="size-12 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                <span className="material-symbols-outlined text-indigo-500 text-xl">how_to_vote</span>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-slate-900 dark:text-white text-base font-bold">Decide the Next Activity</p>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400 text-xs">Vote with your Swarm securely using Stellar Testnet.</p>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/vote')}
+              className="w-full flex items-center justify-center gap-2 h-11 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold text-sm active:scale-[0.98] transition-transform shadow-lg shadow-indigo-500/20"
+            >
+              <span className="material-symbols-outlined text-lg">how_to_vote</span>
+              Vote Now
+            </button>
+          </div>
+        </section>
+
         {/* Live Agent Feed */}
         <section>
           <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Agent Activity Feed</h2>
+            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Travel Swarm: Live Intent Feed</h2>
             <span className="flex items-center gap-1 text-violet-500 text-xs font-medium">
               <span className="size-2 bg-violet-500 rounded-full animate-pulse"></span>
               {isConnected ? 'Live' : 'Demo'}
