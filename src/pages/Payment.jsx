@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStellarWallet } from '../hooks/useStellarWallet';
+import { xpService } from '../services/xpService';
 import * as StellarSdk from '@stellar/stellar-sdk';
 
 export default function Payment() {
@@ -11,18 +12,15 @@ export default function Payment() {
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState(null);
   const [step, setStep] = useState('idle'); // idle, building, signing, submitting, success
+  const [levelUpData, setLevelUpData] = useState(null);
 
   // Get swarm from navigation state or fallback
   const swarm = location.state?.swarm || {
-    name: 'Lima Food Hunters',
-    type: 'Gastronomy',
-    icon: 'ramen_dining',
-    members: 4,
-    color: 'bg-indigo-600',
-    iconColor: 'text-indigo-600'
+    name: 'Camino Inca Secreto',
+    type: 'Adventure',
+    guide: 'Pachacutec Tours',
+    price: 45
   };
-
-  const short = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   const handleDeposit = async () => {
     if (!publicKey) return;
@@ -38,41 +36,42 @@ export default function Payment() {
       try {
         account = await server.loadAccount(publicKey);
       } catch (e) {
-        // Si la cuenta no existe, fondearla con Friendbot automáticamente
         console.log("Account no encontrada. Fondeando con Friendbot...");
         await fetch(`https://friendbot.stellar.org?addr=${publicKey}`);
         account = await server.loadAccount(publicKey);
       }
 
-      // Crear un Claimable Balance (Actúa como Smart Escrow básico)
-      // En este demo, el claimant es el mismo usuario para poder recuperarlo,
-      // pero en un flujo real aquí iría la cuenta multi-sig del Swarm.
+      // Crear un Claimable Balance
       const claimant = new StellarSdk.Claimant(publicKey, StellarSdk.Claimant.predicateUnconditional());
       const operation = StellarSdk.Operation.createClaimableBalance({
         asset: StellarSdk.Asset.native(),
-        amount: "5.0000000",
+        amount: swarm.price.toString(),
         claimants: [claimant]
       });
 
       const tx = new StellarSdk.TransactionBuilder(account, { fee: StellarSdk.BASE_FEE })
         .addOperation(operation)
-        .setTimeout(300) // 5 minutos de validez (Timebounds)
+        .setTimeout(300)
         .setNetworkPassphrase(StellarSdk.Networks.TESTNET)
         .build();
 
       const txXdr = tx.toXDR();
 
       setStep('signing');
-      // Delegar la firma a la extensión Freighter (a través de nuestro hook)
       const signedXdr = await sign(txXdr);
 
       setStep('submitting');
-      // Enviar a la red de Stellar
       const transactionToSubmit = StellarSdk.TransactionBuilder.fromXDR(signedXdr, StellarSdk.Networks.TESTNET);
       const response = await server.submitTransaction(transactionToSubmit);
       
       setTxHash(response.hash);
       setStep('success');
+
+      // Grant XP for payment
+      const xpResult = xpService.grantXp('mission_complete');
+      if (xpResult && xpResult.leveledUp) {
+        setLevelUpData(xpResult);
+      }
 
     } catch (err) {
       console.error('Error procesando pago:', err);
@@ -84,154 +83,177 @@ export default function Payment() {
   };
 
   const stepLabel = {
-    building: 'Preparando Smart Escrow...',
-    signing: 'Esperando firma en Freighter...',
-    submitting: 'Enviando a Stellar Testnet...',
-    success: 'Spot Reservado ✅'
+    building: 'Preparando Escrow...',
+    signing: 'Firma en Freighter...',
+    submitting: 'Enviando a Stellar...',
+    success: 'Reserva Confirmada'
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 to-slate-900 text-white overflow-y-auto w-full absolute inset-0">
-      
+    <div className="min-h-screen bg-background-light dark:bg-background-dark text-slate-900 dark:text-white p-6 flex flex-col font-display">
       {/* Header */}
-      <header className="sticky top-0 z-10 px-6 py-4 bg-slate-900/50 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex size-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-indigo-400 text-2xl">account_balance_wallet</span>
-            <h1 className="text-lg font-bold tracking-tight">Smart Travel Escrow</h1>
-          </div>
-        </div>
-      </header>
+      <div className="flex items-center justify-between mb-8 max-w-md mx-auto w-full pt-4">
+        <button onClick={() => navigate(-1)} className="text-violet-600 dark:text-violet-400 font-medium flex items-center gap-1">
+          <span className="material-symbols-outlined text-sm">arrow_back</span>
+          Volver
+        </button>
+        <h2 className="text-lg font-bold">Confirmar Reserva</h2>
+        <div className="w-16" />
+      </div>
 
-      {/* Main Content */}
-      <main className="max-w-xl mx-auto px-4 py-8 md:py-12">
-        <header className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
-            Únete al Swarm 🚀
-          </h1>
-          <p className="text-slate-400">
-            Deposita XLM en un escrow on-chain. Los fondos solo se liberan si el grupo se completa.
-          </p>
-        </header>
-
-        {/* Wallet Connection */}
-        {publicKey ? (
-          <div className="flex items-center justify-between p-4 bg-slate-800 rounded-xl mb-8 border border-slate-700">
-            <div>
-              <span className="text-green-400 text-sm font-medium flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-green-500 animate-pulse"></span>
-                Conectado
-              </span>
-              <p className="font-mono text-sm text-slate-300 mt-1">
-                {short(publicKey)}
-              </p>
+      {/* Content */}
+      <div className="flex-1 max-w-md mx-auto w-full flex flex-col">
+        {!publicKey ? (
+          <div className="flex-1 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-500">
+            <div className="w-24 h-24 rounded-full bg-violet-500/10 flex items-center justify-center mb-6">
+              <span className="material-symbols-outlined text-violet-500 text-5xl">lock</span>
             </div>
-            <button
-              onClick={disconnect}
-              className="text-sm text-slate-400 hover:text-red-400 transition-colors"
-            >
-              Desconectar
-            </button>
-          </div>
-        ) : (
-          <div className="mb-8 text-center p-6 bg-slate-800/50 rounded-xl border border-slate-700">
-            <span className="material-symbols-outlined text-4xl text-slate-500 mb-3">lock</span>
+            <h3 className="text-2xl font-bold mb-2">Conectar Wallet</h3>
+            <p className="text-slate-500 text-center mb-8">
+              TripClaw utiliza contratos inteligentes en Stellar para garantizar la seguridad de tus fondos.
+            </p>
             <button
               onClick={connect}
               disabled={connecting}
-              className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl font-semibold transition-colors"
+              className="w-full h-14 bg-violet-600 hover:bg-violet-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl font-bold text-white transition-colors flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20"
             >
-              {connecting ? 'Conectando...' : 'Conectar Freighter Wallet'}
+              <span className="material-symbols-outlined">account_balance_wallet</span>
+              {connecting ? 'Conectando Freighter...' : 'Conectar Freighter'}
             </button>
-            <p className="mt-3 text-slate-500 text-xs">
-              Necesitas la extensión Freighter configurada en Testnet.
-            </p>
           </div>
-        )}
+        ) : step !== 'success' ? (
+          <div className="flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Experience Summary */}
+            <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 mb-6 shadow-sm">
+              <h3 className="text-xl font-bold mb-1">{swarm.name}</h3>
+              <p className="text-slate-500 text-sm mb-6">con {swarm.guide || 'Swarm Guide'}</p>
 
-        {/* Swarm Details Card */}
-        {publicKey && step !== 'success' && (
-          <div className="mb-6 p-6 bg-slate-800/50 rounded-2xl border border-slate-700">
-            <h2 className="text-xl font-semibold mb-6 flex items-center justify-between">
-              Confirmar Depósito
-              <span className="bg-indigo-900/50 text-indigo-300 text-xs px-2 py-1 rounded border border-indigo-500/30">94% Compatible</span>
-            </h2>
-
-            {/* Target Swarm */}
-            <div className="flex items-center gap-4 mb-6 p-4 bg-slate-700/30 rounded-xl border border-slate-600">
-               <div className="size-12 rounded-full bg-indigo-900/50 flex items-center justify-center border border-indigo-500/30 shrink-0">
-                  <span className="material-symbols-outlined text-2xl text-indigo-400">{swarm.icon}</span>
-               </div>
-               <div>
-                  <h3 className="font-bold text-lg">{swarm.name}</h3>
-                  <p className="text-slate-400 text-sm">{swarm.type} · Faltan {2} miembros</p>
-               </div>
-            </div>
-
-            <div className="space-y-3 mb-8">
-              <div className="flex justify-between text-sm text-slate-400">
-                <span>Costo de la actividad</span>
-                <span className="text-slate-300">15 XLM</span>
+              <div className="flex items-baseline gap-2 mb-6">
+                <span className="text-4xl font-black text-violet-600 dark:text-violet-400">{swarm.price}</span>
+                <span className="text-slate-500 font-bold">XLM</span>
               </div>
-              <div className="flex justify-between text-sm text-slate-400">
-                <span>Descuento de grupo (Swarm)</span>
-                <span className="text-green-400">- 5 XLM</span>
-              </div>
-              <div className="pt-3 mt-3 border-t border-slate-700 flex justify-between items-center">
-                <span className="font-semibold">Monto a bloquear (Escrow)</span>
-                <span className="text-xl font-bold text-indigo-400">5.00 XLM</span>
+
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>Subtotal</span>
+                  <span className="font-medium text-slate-900 dark:text-white">{swarm.price}.00 XLM</span>
+                </div>
+                <div className="flex justify-between text-slate-600 dark:text-slate-400">
+                  <span>Comisión TripClaw</span>
+                  <span className="font-medium text-slate-900 dark:text-white">0.00 XLM</span>
+                </div>
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-3 flex justify-between font-bold text-base mt-2">
+                  <span>Total</span>
+                  <span className="text-violet-600 dark:text-violet-400">{swarm.price}.00 XLM</span>
+                </div>
               </div>
             </div>
 
-            <button
-              onClick={handleDeposit}
-              disabled={loading}
-              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl font-bold transition-all"
-            >
-              {loading && step !== 'idle' ? stepLabel[step] : 'Firmar Depósito Escrow'}
-            </button>
+            {/* Stellar Features */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div className="size-10 rounded-full bg-violet-500/10 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-violet-500">security</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold mb-0.5">Escrow Automático</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    El dinero se retiene en el contrato inteligente hasta que valides tu asistencia.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div className="size-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-emerald-500">bolt</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold mb-0.5">Pago Instantáneo</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    Transacción inmutable en Stellar Network en menos de 5 segundos.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                <div className="size-10 rounded-full bg-fuchsia-500/10 flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-fuchsia-500">qr_code</span>
+                </div>
+                <div>
+                  <p className="text-sm font-bold mb-0.5">Liberación Segura</p>
+                  <p className="text-xs text-slate-500 leading-relaxed">
+                    El guía recibe el pago solo tras verificar tu Check-In digital.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {error && (
-              <p className="mt-4 text-red-400 text-sm text-center bg-red-900/20 p-2 rounded border border-red-900">{error}</p>
-            )}
-          </div>
-        )}
-
-        {/* Success State */}
-        {publicKey && step === 'success' && (
-          <div className="mb-6 p-8 bg-green-900/20 border border-green-700/50 rounded-2xl text-center">
-            <div className="size-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-green-500/30">
-              <span className="material-symbols-outlined text-green-400 text-4xl">verified</span>
-            </div>
-            <h3 className="text-2xl font-bold text-green-400 mb-2">¡Cupo Asegurado!</h3>
-            <p className="text-slate-300 mb-6 text-sm">
-              Tu depósito de 5 XLM está bloqueado en el contrato inteligente. Esperando a los demás miembros.
-            </p>
-            {txHash && (
-              <div className="bg-black/30 p-3 rounded-lg border border-white/5 font-mono text-xs text-slate-400 mb-6 break-all">
-                TX: {txHash}
+              <div className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center gap-2 text-red-500 text-xs font-medium">
+                <span className="material-symbols-outlined text-sm">error</span>
+                {error}
               </div>
             )}
+
+            {/* Payment Button */}
+            <div className="mt-auto">
+              <button
+                onClick={handleDeposit}
+                disabled={loading}
+                className="w-full h-14 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50 disabled:grayscale flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(139,92,246,0.3)] active:scale-95"
+              >
+                {loading && step !== 'idle' ? (
+                  <>
+                    <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                    <span>{stepLabel[step]}</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Pagar {swarm.price} XLM con Stellar</span>
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-center text-slate-500 font-medium mt-4 pb-2">
+                Sin claves privadas. Sin complicaciones. Solo reserva.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full animate-in zoom-in-95 duration-500">
+            <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center mb-6 border border-emerald-500/30">
+              <span className="material-symbols-outlined text-emerald-500 text-5xl">check_circle</span>
+            </div>
+
+            <h3 className="text-3xl font-black mb-2 text-center tracking-tight">¡Reserva Confirmada!</h3>
+            <p className="text-slate-500 text-center mb-8 px-4 leading-relaxed">
+              Tu pago está seguro en el contrato de escrow. El guía recibirá el XLM tras tu check-in.
+            </p>
+
+            <div className="bg-white dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full text-center shadow-lg mb-8 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 pointer-events-none"></div>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2">
+                ¡Misión Completada!
+              </p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-violet-600 dark:text-violet-400 text-2xl font-black">+150 XP</span>
+                <span className="text-2xl animate-bounce">🏔️</span>
+              </div>
+              {levelUpData && (
+                <div className="mt-3 inline-block px-3 py-1 bg-fuchsia-500/10 text-fuchsia-500 border border-fuchsia-500/20 rounded-full text-xs font-bold uppercase tracking-wider">
+                  Level Up! You are now {levelUpData.rank.name}
+                </div>
+              )}
+            </div>
+
             <button
-              onClick={() => navigate('/map')}
-              className="w-full py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-semibold transition-colors"
+              onClick={() => navigate('/passport')}
+              className="w-full h-14 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl font-bold hover:opacity-90 transition-opacity"
             >
-              Volver al Mapa
+              Ver Mi Pasaporte
             </button>
           </div>
         )}
-
-        <footer className="mt-8 text-center text-slate-600 text-xs flex items-center justify-center gap-1">
-          <span className="material-symbols-outlined text-[14px]">lock</span>
-          Smart Contracts by Soroban · Stellar Testnet
-        </footer>
-      </main>
+      </div>
     </div>
   );
 }

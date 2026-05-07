@@ -53,7 +53,7 @@ export default function Onboarding() {
       createdAt: new Date().toISOString()
     };
     localStorage.setItem('tripclaw_identity', JSON.stringify(userProfile));
-    navigate('/dashboard');
+    navigate('/verify');
   };
 
   const shortWallet = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;

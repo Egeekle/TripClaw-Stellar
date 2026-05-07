@@ -6,3 +6,5 @@ dist
 .DS_Store
 *.log
 .aider*
+/TripClaw 2
+/Stellar-Build-PE

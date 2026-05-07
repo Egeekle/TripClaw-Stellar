@@ -272,7 +272,7 @@ export default function Map() {
               position={[swarm.lat, swarm.lng]} 
               icon={createSwarmIcon(swarm)}
               eventHandlers={{
-                click: () => navigate('/payment', { state: { swarm } }),
+                click: () => navigate('/match', { state: { city: swarm } }),
               }}
             />
           ))}
