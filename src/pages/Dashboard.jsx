@@ -87,15 +87,17 @@ export default function Dashboard() {
         <div className="flex items-center p-4 pb-2 justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className={`relative flex size-12 items-center justify-center rounded-2xl border-2 transition-colors shadow-lg ${identity ? 'bg-slate-900 border-slate-700' : isConnected ? 'border-emerald-400 bg-emerald-500/10' : 'border-violet-500/50 bg-violet-500/10'}`}>
-              <Logo className="w-8 h-8" />
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Logo className="w-10 h-10" />
               <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-violet-600 to-fuchsia-500 border border-violet-400 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-lg">
                 Lv.{identity?.level || 1}
               </div>
             </div>
             <div className="flex flex-col items-start">
-              <h2 className="text-slate-900 dark:text-white text-base font-bold leading-tight tracking-tight flex items-center gap-1">
-                {identity ? `@${identity.nickname}` : 'TripClaw'}
-                <span className="material-symbols-outlined text-[14px] text-fuchsia-500">verified</span>
+              <h2 className="text-slate-900 dark:text-white text-lg font-black leading-tight tracking-tight flex items-center gap-1 uppercase italic">
+                {identity ? identity.nickname : 'TripClaw'}
+                <span className="material-symbols-outlined text-[16px] text-fuchsia-500">verified</span>
               </h2>
               <div className="flex items-center gap-1">
                 <span className={`size-2 rounded-full ${statusColor[wsStatus]} ${wsStatus === 'connected' ? 'animate-pulse' : ''}`}></span>
@@ -133,10 +135,10 @@ export default function Dashboard() {
                 <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-violet-500/30 rounded-full blur-3xl animate-pulse"></div>
                 <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
                 <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-amber-400/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-                {/* Center icon */}
+                {/* Center logo */}
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="size-20 rounded-2xl bg-white/10 backdrop-blur-xl border border-white/20 flex items-center justify-center shadow-2xl">
-                    <span className="material-symbols-outlined text-white text-4xl">neurology</span>
+                  <div className="p-4 rounded-3xl bg-slate-900/40 backdrop-blur-2xl border border-white/10 flex items-center justify-center shadow-[0_0_50px_rgba(139,92,246,0.3)]">
+                    <Logo className="w-20 h-20" />
                   </div>
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#1c2427] to-transparent"></div>

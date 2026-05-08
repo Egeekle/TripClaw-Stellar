@@ -172,10 +172,14 @@ export default function Onboarding() {
       {/* STEP 1: Create Account (Supabase Auth) */}
       {step === 1 && (
         <div className="px-4 flex flex-col gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
-          <div className="flex flex-col items-start gap-4">
-            <Logo className="w-16 h-16 drop-shadow-[0_0_15px_rgba(167,139,250,0.5)]" />
-            <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-[1.1]">
-              {authMode === 'register' ? 'Crear Cuenta' : 'Iniciar Sesión'}
+          <div className="flex flex-col items-start gap-4 mb-2">
+            <Logo 
+              className="w-16 h-16 drop-shadow-[0_0_20px_rgba(139,92,246,0.4)]" 
+              showText={true} 
+              textClassName="text-3xl"
+            />
+            <h1 className="text-4xl font-black tracking-tighter text-slate-900 dark:text-white leading-[1.1] mt-2">
+              {authMode === 'register' ? 'Explora el Mundo' : 'Bienvenido'}
             </h1>
             <p className="text-slate-500 dark:text-slate-400 font-medium text-lg leading-snug">
               {authMode === 'register' 

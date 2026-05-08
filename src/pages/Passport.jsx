@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import Logo from "../components/Logo";
 
 const badges = [
   { id: 1, name: "Primer Camino", icon: "🏔️", unlocked: true },
@@ -43,8 +44,8 @@ export default function Passport() {
 
         {/* Profile Info */}
         <div className="flex flex-col items-center relative z-10">
-          <div className="w-24 h-24 rounded-full bg-violet-500/10 border-4 border-violet-500 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(139,92,246,0.3)]">
-            <span className="material-symbols-outlined text-4xl text-violet-400">psychiatry</span>
+          <div className="w-28 h-28 rounded-3xl bg-slate-900 border-2 border-violet-500/50 flex items-center justify-center mb-4 shadow-[0_0_30px_rgba(139,92,246,0.3)] transform -rotate-3">
+            <Logo className="w-16 h-16" />
           </div>
           <h3 className="text-2xl font-black mb-1">{profile.nickname || 'Explorador Anónimo'}</h3>
           <p className="text-violet-500 dark:text-violet-400 font-medium text-sm mb-6 uppercase tracking-wider">
