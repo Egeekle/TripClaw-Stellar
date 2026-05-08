@@ -27,12 +27,16 @@ export default defineConfig({
     chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-stellar': ['@stellar/stellar-sdk', '@stellar/freighter-api'],
-          'vendor-ui': ['framer-motion', 'lucide-react', 'leaflet', 'react-leaflet'],
-          'vendor-supabase': ['@supabase/supabase-js'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor-react';
+            if (id.includes('@stellar')) return 'vendor-stellar';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('framer-motion') || id.includes('lucide-react') || id.includes('leaflet')) return 'vendor-ui';
+            return 'vendor';
+          }
         }
+
       }
     },
     // Attempt to silence the esbuild warning if possible via build target
