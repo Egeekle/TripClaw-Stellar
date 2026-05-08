@@ -1,7 +1,9 @@
 /**
  * TripClaw XP & Progression Engine
  * Simulates the NestJS backend logic for XP balancing and Level Ups.
+ * Now syncs to Supabase PostgreSQL via identityApi.
  */
+import { syncXpToCloud } from './identityApi';
 
 const RANKS = [
   { maxLevel: 5, name: 'Novice Scout', color: 'from-slate-400 to-slate-600' },
@@ -41,6 +43,7 @@ export class XpEngine {
   /**
    * Simulates an action being validated by the backend.
    * Returns a payload if the user leveled up.
+   * Now syncs to Supabase cloud in the background.
    */
   grantXp(actionType) {
     const profile = JSON.parse(localStorage.getItem('tripclaw_identity') || '{}');
@@ -63,6 +66,9 @@ export class XpEngine {
     
     localStorage.setItem('tripclaw_identity', JSON.stringify(profile));
 
+    // 🔄 Sync to Supabase PostgreSQL (fire-and-forget, non-blocking)
+    syncXpToCloud(profile.nickname, profile.xp, profile.level);
+
     // Return Level Up Event if true
     if (newLevelData.level > previousLevelData.level) {
       return {
@@ -79,3 +85,4 @@ export class XpEngine {
 }
 
 export const xpService = new XpEngine();
+

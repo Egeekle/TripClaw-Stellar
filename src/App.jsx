@@ -1,5 +1,7 @@
 import { Suspense, lazy, Component } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import PageTransition from './components/PageTransition';
 
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
@@ -78,23 +80,34 @@ function NotFound() {
   );
 }
 
+// ── Animated Routes Wrapper ─────────────────────────────────
+function AnimatedRoutes() {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><Onboarding /></PageTransition>} />
+        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+        <Route path="/map" element={<PageTransition><Map /></PageTransition>} />
+        <Route path="/console" element={<PageTransition><AgentConsole /></PageTransition>} />
+        <Route path="/payment" element={<PageTransition><Payment /></PageTransition>} />
+        <Route path="/vote" element={<PageTransition><Vote /></PageTransition>} />
+        <Route path="/passport" element={<PageTransition><Passport /></PageTransition>} />
+        <Route path="/match" element={<PageTransition><MatchExperience /></PageTransition>} />
+        <Route path="/verify" element={<PageTransition><BiometricVerification /></PageTransition>} />
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+}
+
 // ── App ─────────────────────────────────────────────────────
 function App() {
   return (
     <ErrorBoundary>
       <Suspense fallback={<LoadingFallback />}>
-        <Routes>
-          <Route path="/" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/map" element={<Map />} />
-          <Route path="/console" element={<AgentConsole />} />
-          <Route path="/payment" element={<Payment />} />
-          <Route path="/vote" element={<Vote />} />
-          <Route path="/passport" element={<Passport />} />
-          <Route path="/match" element={<MatchExperience />} />
-          <Route path="/verify" element={<BiometricVerification />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AnimatedRoutes />
       </Suspense>
     </ErrorBoundary>
   );

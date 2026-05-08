@@ -9,3 +9,5 @@ dist
 /TripClaw 2
 /Stellar-Build-PE
 /ui_exports
+.vercel
+.env*.local
