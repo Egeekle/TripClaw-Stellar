@@ -201,6 +201,97 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* Daily Missions Loop */}
+        <section>
+          <div className="flex items-center justify-between px-1 mb-3">
+            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Misiones Diarias</h2>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">Racha: 3 Días 🔥</span>
+          </div>
+          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
+                  <span className="material-symbols-outlined text-slate-400">local_cafe</span>
+                </div>
+                <div>
+                  <p className="text-slate-900 dark:text-white text-sm font-bold">Descubre 1 café oculto</p>
+                  <p className="text-xs text-slate-500">+50 XP</p>
+                </div>
+              </div>
+              <button className="h-8 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full text-xs font-bold">Ir</button>
+            </div>
+            
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <span className="material-symbols-outlined text-emerald-500">check_circle</span>
+                </div>
+                <div>
+                  <p className="text-slate-900 dark:text-white text-sm font-bold line-through opacity-70">Sube una foto del atardecer</p>
+                  <p className="text-xs text-emerald-500 font-bold">Completado</p>
+                </div>
+              </div>
+              <span className="text-emerald-500 font-bold text-sm">+30 XP</span>
+            </div>
+          </div>
+        </section>
+
+        {/* City Completion Loop */}
+        <section>
+          <div className="flex items-center justify-between px-1 mb-3">
+            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Progreso en Cusco</h2>
+            <span className="text-violet-500 text-xs font-bold">72%</span>
+          </div>
+          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm">
+            <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-4">
+              <div className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 w-[72%]"></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Cafés Secretos</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">12/20 <span className="text-emerald-500 text-xs ml-1">(60%)</span></p>
+              </div>
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Miradores</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">4/8 <span className="text-amber-500 text-xs ml-1">(50%)</span></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Reputation Score Loop */}
+        <section>
+          <div className="bg-gradient-to-br from-indigo-900 to-violet-900 rounded-xl p-4 shadow-lg text-white border border-indigo-500/30 relative overflow-hidden">
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-white/5 blur-2xl transform skew-x-12"></div>
+            <div className="flex justify-between items-start mb-4 relative z-10">
+              <div>
+                <p className="text-[10px] text-indigo-300 uppercase font-bold tracking-wider mb-1">Reputation Score</p>
+                <div className="flex items-end gap-2">
+                  <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">91</span>
+                  <span className="text-xs text-indigo-200 mb-1">/ 100</span>
+                </div>
+              </div>
+              <div className="px-2 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-yellow-900 text-[10px] font-black uppercase rounded shadow-lg">
+                Gold Rank
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 relative z-10">
+              <div className="text-center">
+                <p className="text-[9px] text-indigo-300 uppercase font-bold">Reviews</p>
+                <p className="text-sm font-bold text-emerald-400">Excelentes</p>
+              </div>
+              <div className="text-center border-x border-indigo-500/30">
+                <p className="text-[9px] text-indigo-300 uppercase font-bold">Validaciones</p>
+                <p className="text-sm font-bold text-white">12 P2P</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[9px] text-indigo-300 uppercase font-bold">Cancelaciones</p>
+                <p className="text-sm font-bold text-emerald-400">0%</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Active Tools / Skills */}
         <section>
           <div className="flex items-center justify-between px-1 mb-3">

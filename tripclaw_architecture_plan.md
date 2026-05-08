@@ -115,3 +115,31 @@ CREATE TABLE user_badges (
 1. Set up a PostgreSQL database (e.g., Supabase).
 2. Migrate the `localStorage` MVP logic to the actual DB.
 3. Build the `/traveler/@[nickname]` public profile page.
+
+## 11. Reputation Engine (CLAVE)
+El **Reputation Score** es el pilar de confianza Web3 del ecosistema TripClaw. No debe medir únicamente el tiempo de uso o la actividad, sino la autenticidad y el valor aportado a la comunidad.
+
+Factores de medición:
+* **Reviews Útiles (Peso: Alto)**: Reseñas que otros viajeros marcan como valiosas o precisas.
+* **Comportamiento Seguro (Peso: Alto)**: Historial sin reportes, respeto a las reglas locales y a los guías.
+* **Validaciones Sociales (Peso: Alto)**: Aprobaciones P2P (Peer-to-Peer) otorgadas por otros exploradores de alto rango (ej. Guardianes validando a nuevos exploradores).
+* **Engagement Real (Peso: Medio)**: Interacciones consistentes y naturales con la plataforma que descartan comportamiento de bots o farmeo.
+* **Viajes Completados (Peso: Medio)**: Misiones y reservas completadas exitosamente y validadas por la red (GPS + Blockchain).
+* **Cancelaciones (Peso: Negativo)**: Faltar a reservas confirmadas o misiones de Swarm penaliza directamente el puntaje de reputación.
+
+## 12. Retention Loops Stack (El Motor de Adicción Positiva)
+Para transformar TripClaw de una simple app de viajes a un ecosistema inmersivo y altamente retentivo, implementaremos múltiples loops secundarios. El objetivo es activar la dopamina mediante progresión, estatus y descubrimiento, sin cruzar la línea hacia un "casino hiperactivo". La estética se mantendrá **elegante, inteligente, misteriosa y premium (Cyber-Explorer)**.
+
+### MVP Loop Stack (Prioridad Absoluta)
+1. **Exploration Loop (Core)**: Entrar a ciudad -> Descubrir -> Ganar XP -> Desbloquear Badge -> Subir Nivel. Potenciado drásticamente mediante **"Hidden Discoveries"** (La IA detecta tu contexto y te envía alertas como: *"A rooftop jazz café was unlocked 4 minutes from you. Only 12 travelers found it this week"*). Genera FOMO geolocalizado extremo.
+2. **Daily Mission Loop**: Misiones cortas diarias (ej. "Descubre 1 café oculto", "Valida tu GPS en un sitio histórico") con recompensas acumulativas (*Streaks* tipo Duolingo). 7 días = Rare Badge; 30 días = Legendary Rank.
+3. **City Completion Loop (%)**: Indicadores visuales de progreso (ej. "Cusco Completion: 72%"). Los usuarios completan tipos específicos (Miradores 4/8, Museos 5/7) creando una compulsión natural similar a los *achievements* en los videojuegos.
+4. **Reputation Loop (Web3 Social Status)**: Tu Puntaje de Confianza te da beneficios reales. Bronze = basic perks, Silver = AI upgrades, Gold = premium quests, Platinum = VIP Swarm access. Genera estatus y reputación digital persistente.
+5. **AI Companion Relationship Loop**: La IA no es una herramienta, es un *copiloto*. Alerta: *"Puma Scout aprendió tus preferencias: te gustan los paseos nocturnos"*. Genera apego y dependencia emocional ligera (Tamagotchi/Replika).
+
+### Expansión de Loops Futuros (Viralidad y Retención a Largo Plazo)
+* **Social Status Loop**: Leaderboards por ciudad o tipo de viajero (ej. "Top Explorers — Lima"). Crea flex social y competencia sana.
+* **Surprise Reward Loop**: Recompensas variables (cajas de botín *elegantes*). Hacer check-in puede otorgar 50 XP, o de pronto un "Unexpected Discovery" con 250 XP y un Badge Raro. La imprevisibilidad es dopamina pura.
+* **Seasonal Event Loop**: Eventos temporales para reactivación. Ej. "Haunted Lima Event" en octubre o "Sacred Cusco Expedition" en junio. Fomenta el retorno para contenido exclusivo.
+* **Squad Loop**: Misiones cooperativas ("Completen 10 cafés ocultos como un escuadrón"). Altamente viral, usa presión social positiva para invitar a amigos.
+* **Real World Proof Loop**: El puente absoluto a Web3. Tus viajes reales se convierten en **Capital Social Digital**. Los usuarios pueden exportar su "Verified Traveler Identity" y mostrar al mundo sus conquistas de exploración.
