@@ -28,7 +28,7 @@ export default function Onboarding() {
   const location = useLocation();
   const { pair, isGatewayOnline } = useOpenClaw();
   const { publicKey, connect, connecting } = useStellarWallet();
-  const { isAuthenticated, user, loading: authHookLoading } = useAuth();
+  const { isAuthenticated, user, updateProfile, loading: authHookLoading } = useAuth();
   
   const [step, setStep] = useState(1);
   const [pairingCode, setPairingCode] = useState('');
@@ -40,6 +40,25 @@ export default function Onboarding() {
       setStep(2);
     }
   }, [isAuthenticated, step]);
+
+  // Auto-sync identity from user profile or auth input
+  useEffect(() => {
+    if (user || authNickname) {
+      setIdentity(prev => ({
+        ...prev,
+        nickname: user?.nickname || authNickname || prev.nickname,
+        travelerType: user?.travelerType || prev.travelerType,
+        companion: user?.companion || prev.companion
+      }));
+    }
+  }, [user, authNickname]);
+
+  // Auto-redirect if already fully onboarded
+  useEffect(() => {
+    if (isAuthenticated && user?.travelerType && user?.companion) {
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, from]);
 
   const from = location.state?.from?.pathname || "/dashboard";
 
@@ -132,8 +151,16 @@ export default function Onboarding() {
     setPairingStatus(result && !result.error ? 'success' : 'error');
   };
 
-  const completeOnboarding = () => {
-    navigate(from, { replace: true });
+  const completeOnboarding = async () => {
+    try {
+      setAuthLoading(true);
+      await updateProfile(identity);
+      navigate(from, { replace: true });
+    } catch (error) {
+      setAuthError('Error al guardar tu perfil. Intenta de nuevo.');
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const shortWallet = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -147,6 +174,19 @@ export default function Onboarding() {
     if (step === 4) return identity.companion;
     return false;
   };
+
+  if (authHookLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+          <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center shadow-lg animate-pulse">
+            <span className="material-symbols-outlined text-white text-2xl">neurology</span>
+          </div>
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Sincronizando explorador...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-[430px] mx-auto min-h-screen flex flex-col relative pb-24 bg-background-light dark:bg-background-dark text-slate-900 dark:text-white">
