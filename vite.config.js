@@ -15,13 +15,28 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      // Proxy all ZeroClaw API calls through Vite to avoid CORS
       '/zc-api': {
         target: 'http://127.0.0.1:18789',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/zc-api/, ''),
-        ws: true, // also proxy WebSocket
+        ws: true,
       },
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1200,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-stellar': ['@stellar/stellar-sdk', '@stellar/freighter-api'],
+          'vendor-ui': ['framer-motion', 'lucide-react', 'leaflet', 'react-leaflet'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+        }
+      }
+    },
+    // Attempt to silence the esbuild warning if possible via build target
+    target: 'esnext',
+  }
 })
+

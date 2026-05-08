@@ -1,33 +1,36 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
-import { sendTelegramViaAgent } from '../services/openclawApi';
+import { useAuth } from '../hooks/useAuth';
 import WalletWidget from '../components/WalletWidget';
 import Logo from '../components/Logo';
+import AgentHero from '../components/dashboard/AgentHero';
+import LiveFeed from '../components/dashboard/LiveFeed';
+
+const statusColor = {
+  connected: 'bg-emerald-500',
+  connecting: 'bg-amber-500',
+  disconnected: 'bg-slate-400',
+  error: 'bg-red-500',
+};
+
+const statusLabel = {
+  connected: 'Agent Online',
+  connecting: 'Synchronizing...',
+  disconnected: 'Agent Offline',
+  error: 'Connection Error',
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { status, wsStatus, agentEvents, tools, isConnected, isGatewayOnline, send } = useOpenClaw();
-  const [identity, setIdentity] = useState(null);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('tripclaw_identity');
-    if (saved) {
-      setIdentity(JSON.parse(saved));
-    }
-  }, []);
+  const { status, wsStatus, agentEvents, isGatewayOnline } = useOpenClaw();
+  const { user: identity } = useAuth();
 
   // Simulated live feed when gateway is offline (demo mode)
   const [demoEvents, setDemoEvents] = useState([]);
-  const [toast, setToast] = useState(null);
-
-  const showToast = (type, msg) => {
-    setToast({ type, msg });
-    setTimeout(() => setToast(null), 4000);
-  };
 
   useEffect(() => {
-    if (isGatewayOnline && agentEvents.length > 0) return; // Use real events
+    if (isGatewayOnline && agentEvents.length > 0) return;
 
     const intents = [
       { agent: 'Carlos', action: 'wants to hike tomorrow in Sacred Valley', type: 'Adventure' },
@@ -39,7 +42,6 @@ export default function Dashboard() {
 
     const interval = setInterval(() => {
       const randomIntent = intents[Math.floor(Math.random() * intents.length)];
-
       setDemoEvents((prev) => [
         { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Just now' },
         ...prev.map((e) => ({ ...e, time: e.time === 'Just now' ? '1m ago' : e.time })).slice(0, 4),
@@ -49,44 +51,13 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isGatewayOnline, agentEvents]);
 
-  const displayEvents = isGatewayOnline && agentEvents.length > 0
-    ? agentEvents.map((e) => ({
-        id: e.id,
-        agent: e.tool || 'OpenClaw Agent',
-        action: e.content,
-        time: e.time,
-      }))
-    : demoEvents;
-
-  const statusColor = {
-    connected: 'bg-emerald-500',
-    connecting: 'bg-amber-400',
-    disconnected: 'bg-slate-400',
-    error: 'bg-red-500',
-  };
-
-  const statusLabel = {
-    connected: 'OpenClaw Live',
-    connecting: 'Connecting…',
-    disconnected: 'Offline',
-    error: 'Error',
-  };
+  const activeEvents = isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents;
 
   return (
-    <div className="max-w-md mx-auto min-h-screen pb-24">
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-xl shadow-2xl backdrop-blur-xl text-sm font-bold transition-all animate-bounce ${
-          toast.type === 'success' ? 'bg-emerald-500/90 text-white' : 'bg-red-500/90 text-white'
-        }`}>
-          {toast.msg}
-        </div>
-      )}
-      {/* Top Navigation Bar */}
-      <div className="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+    <div className="max-w-[430px] mx-auto min-h-screen pb-24 bg-background-light dark:bg-background-dark font-display">
+      {/* Header / Nav */}
+      <div className="sticky top-0 z-40 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center p-4 pb-2 justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className={`relative flex size-12 items-center justify-center rounded-2xl border-2 transition-colors shadow-lg ${identity ? 'bg-slate-900 border-slate-700' : isConnected ? 'border-emerald-400 bg-emerald-500/10' : 'border-violet-500/50 bg-violet-500/10'}`}>
           <div className="flex items-center gap-3">
             <div className="relative">
               <Logo className="w-10 h-10" />
@@ -100,9 +71,9 @@ export default function Dashboard() {
                 <span className="material-symbols-outlined text-[16px] text-fuchsia-500">verified</span>
               </h2>
               <div className="flex items-center gap-1">
-                <span className={`size-2 rounded-full ${statusColor[wsStatus]} ${wsStatus === 'connected' ? 'animate-pulse' : ''}`}></span>
+                <span className={`size-2 rounded-full ${statusColor[wsStatus] || 'bg-slate-400'} ${wsStatus === 'connected' ? 'animate-pulse' : ''}`}></span>
                 <span className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest font-bold">
-                  {identity ? `${identity.travelerType} • ${identity.xp} XP` : statusLabel[wsStatus]}
+                  {identity ? `${identity.travelerType || 'Explorer'} • ${identity.xp || 0} XP` : statusLabel[wsStatus]}
                 </span>
               </div>
             </div>
@@ -114,350 +85,112 @@ export default function Dashboard() {
       </div>
 
       <main className="px-4 space-y-6">
-        {/* OpenClaw Agent Status Hero */}
-        <section className="mt-4">
-          <div className="relative group">
-            {/* Badge */}
-            <div className="absolute -top-3 -right-2 z-10 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg shadow-violet-500/20 flex items-center gap-1">
-              <span className="material-symbols-outlined text-[14px]">psychology</span>
-              OpenClaw Agent
+        <AgentHero status={status} isGatewayOnline={isGatewayOnline} />
+
+        {/* Quick Stats */}
+        <section className="grid grid-cols-2 gap-4">
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Rep</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xl font-black text-slate-900 dark:text-white">{identity?.reputationScore || 100}</p>
+              <span className="material-symbols-outlined text-emerald-500 text-sm">trending_up</span>
             </div>
-            <div className="flex flex-col items-stretch justify-start rounded-xl overflow-hidden shadow-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-none">
-              {/* Gradient Hero instead of image */}
-              <div className="w-full aspect-[16/9] relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-900 via-fuchsia-800 to-slate-900"></div>
-                {/* Animated grid pattern */}
-                <div className="absolute inset-0 opacity-20" style={{
-                  backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-                  backgroundSize: '24px 24px',
-                }}></div>
-                {/* Animated blobs */}
-                <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-violet-500/30 rounded-full blur-3xl animate-pulse"></div>
-                <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-fuchsia-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-                <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-amber-400/20 rounded-full blur-2xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-                {/* Center logo */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="p-4 rounded-3xl bg-slate-900/40 backdrop-blur-2xl border border-white/10 flex items-center justify-center shadow-[0_0_50px_rgba(139,92,246,0.3)]">
-                    <Logo className="w-20 h-20" />
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#1c2427] to-transparent"></div>
-              </div>
-
-              <div className="flex w-full flex-col items-stretch justify-center gap-1 p-5 -mt-12 relative z-10">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2 py-0.5 rounded bg-violet-500/20 text-violet-500 dark:text-violet-400 text-[10px] font-bold uppercase tracking-wider">
-                    Session: {status?.session || 'main'}
-                  </span>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-                    Gateway {status?.gateway || 'checking...'}
-                  </span>
-                </div>
-                <p className="text-slate-900 dark:text-white text-2xl font-bold leading-tight tracking-tight">Agent Control Panel</p>
-                <div className="mt-4 space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-slate-800 dark:text-slate-300 text-base font-medium">
-                      {status?.agentsCount || tools.length || 0} Skills/Tools Available
-                    </p>
-                    <p className="text-slate-500 text-xs font-normal">
-                      {isGatewayOnline ? 'Autonomous agent running on local gateway' : 'Demo mode — configure OpenClaw gateway to activate'}
-                    </p>
-                  </div>
-
-                  {/* Connection Indicator */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-end">
-                      <span className="text-slate-500 dark:text-slate-400 text-xs">Agent Uptime</span>
-                      <span className="text-slate-900 dark:text-white text-xs font-bold">
-                        {isGatewayOnline ? 'Active' : 'Standby'}
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          isConnected
-                            ? 'bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-[0_0_8px_rgba(167,139,250,0.6)]'
-                            : 'bg-slate-400'
-                        }`}
-                        style={{ width: isConnected ? '100%' : '15%' }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                      <span className={`material-symbols-outlined text-[14px] ${isConnected ? 'animate-spin text-violet-500' : ''}`}>sync</span>
-                      {isConnected ? 'WebSocket Sync' : 'No Connection'}
-                    </div>
-                    <button
-                      onClick={() => navigate('/map')}
-                      className="flex h-9 px-5 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white rounded-lg text-sm font-bold items-center gap-2 transition-transform active:scale-95 shadow-lg shadow-violet-500/20"
-                    >
-                      View Swarm Map
-                      <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
+          </div>
+          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Missions Done</p>
+            <div className="flex items-center gap-2">
+              <p className="text-xl font-black text-slate-900 dark:text-white">3</p>
+              <span className="material-symbols-outlined text-violet-500 text-sm">military_tech</span>
             </div>
           </div>
         </section>
 
-        {/* Daily Missions Loop */}
-        <section>
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Misiones Diarias</h2>
-            <span className="text-[10px] uppercase tracking-wider font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded">Racha: 3 Días 🔥</span>
-          </div>
-          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center border border-slate-200 dark:border-slate-700">
-                  <span className="material-symbols-outlined text-slate-400">local_cafe</span>
-                </div>
-                <div>
-                  <p className="text-slate-900 dark:text-white text-sm font-bold">Descubre 1 café oculto</p>
-                  <p className="text-xs text-slate-500">+50 XP</p>
-                </div>
-              </div>
-              <button className="h-8 px-4 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded-full text-xs font-bold">Ir</button>
+        {/* Navigation Grid */}
+        <section className="grid grid-cols-2 gap-4">
+          <button 
+            onClick={() => navigate('/map')}
+            className="group relative h-32 rounded-2xl overflow-hidden shadow-xl"
+          >
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400')] bg-cover bg-center group-hover:scale-110 transition-transform duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent"></div>
+            <div className="absolute bottom-3 left-3 text-left">
+              <span className="material-symbols-outlined text-white mb-1">map</span>
+              <p className="text-white font-black text-sm uppercase tracking-tighter">Explore Map</p>
+              <p className="text-white/60 text-[10px] font-medium">Find Swarms & Missions</p>
             </div>
-            
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                  <span className="material-symbols-outlined text-emerald-500">check_circle</span>
-                </div>
-                <div>
-                  <p className="text-slate-900 dark:text-white text-sm font-bold line-through opacity-70">Sube una foto del atardecer</p>
-                  <p className="text-xs text-emerald-500 font-bold">Completado</p>
-                </div>
-              </div>
-              <span className="text-emerald-500 font-bold text-sm">+30 XP</span>
+          </button>
+          
+          <button 
+            onClick={() => navigate('/console')}
+            className="group relative h-32 rounded-2xl overflow-hidden shadow-xl"
+          >
+            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400')] bg-cover bg-center group-hover:scale-110 transition-transform duration-500"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-violet-900 via-violet-900/40 to-transparent"></div>
+            <div className="absolute bottom-3 left-3 text-left">
+              <span className="material-symbols-outlined text-white mb-1">terminal</span>
+              <p className="text-white font-black text-sm uppercase tracking-tighter">AI Console</p>
+              <p className="text-white/60 text-[10px] font-medium">Direct Agent Command</p>
             </div>
-          </div>
+          </button>
+
+          <button 
+            onClick={() => navigate('/passport')}
+            className="group relative h-28 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c2427]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent"></div>
+            <div className="p-4 flex flex-col items-start justify-between h-full">
+              <span className="material-symbols-outlined text-fuchsia-500">badge</span>
+              <div className="text-left">
+                <p className="text-slate-900 dark:text-white font-black text-xs uppercase tracking-tighter leading-none mb-1">My Passport</p>
+                <p className="text-slate-400 text-[10px] font-medium">Badges & History</p>
+              </div>
+            </div>
+          </button>
+
+          <button 
+            onClick={() => navigate('/vote')}
+            className="group relative h-28 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c2427]"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent"></div>
+            <div className="p-4 flex flex-col items-start justify-between h-full">
+              <span className="material-symbols-outlined text-amber-500">how_to_vote</span>
+              <div className="text-left">
+                <p className="text-slate-900 dark:text-white font-black text-xs uppercase tracking-tighter leading-none mb-1">Governance</p>
+                <p className="text-slate-400 text-[10px] font-medium">Vote on Proposals</p>
+              </div>
+            </div>
+          </button>
         </section>
 
-        {/* City Completion Loop */}
-        <section>
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Progreso en Cusco</h2>
-            <span className="text-violet-500 text-xs font-bold">72%</span>
-          </div>
-          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm">
-            <div className="h-2 w-full bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden mb-4">
-              <div className="h-full bg-gradient-to-r from-violet-600 to-fuchsia-500 w-[72%]"></div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Cafés Secretos</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">12/20 <span className="text-emerald-500 text-xs ml-1">(60%)</span></p>
-              </div>
-              <div className="bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
-                <p className="text-[10px] text-slate-500 uppercase font-bold mb-1">Miradores</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">4/8 <span className="text-amber-500 text-xs ml-1">(50%)</span></p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Reputation Score Loop */}
-        <section>
-          <div className="bg-gradient-to-br from-indigo-900 to-violet-900 rounded-xl p-4 shadow-lg text-white border border-indigo-500/30 relative overflow-hidden">
-            <div className="absolute right-0 top-0 bottom-0 w-32 bg-white/5 blur-2xl transform skew-x-12"></div>
-            <div className="flex justify-between items-start mb-4 relative z-10">
-              <div>
-                <p className="text-[10px] text-indigo-300 uppercase font-bold tracking-wider mb-1">Reputation Score</p>
-                <div className="flex items-end gap-2">
-                  <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">91</span>
-                  <span className="text-xs text-indigo-200 mb-1">/ 100</span>
-                </div>
-              </div>
-              <div className="px-2 py-1 bg-gradient-to-r from-amber-200 to-yellow-400 text-yellow-900 text-[10px] font-black uppercase rounded shadow-lg">
-                Gold Rank
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-2 relative z-10">
-              <div className="text-center">
-                <p className="text-[9px] text-indigo-300 uppercase font-bold">Reviews</p>
-                <p className="text-sm font-bold text-emerald-400">Excelentes</p>
-              </div>
-              <div className="text-center border-x border-indigo-500/30">
-                <p className="text-[9px] text-indigo-300 uppercase font-bold">Validaciones</p>
-                <p className="text-sm font-bold text-white">12 P2P</p>
-              </div>
-              <div className="text-center">
-                <p className="text-[9px] text-indigo-300 uppercase font-bold">Cancelaciones</p>
-                <p className="text-sm font-bold text-emerald-400">0%</p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Active Tools / Skills */}
-        <section>
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Active Skills</h2>
-            <span
-              onClick={() => navigate('/console')}
-              className="text-violet-500 text-xs font-medium cursor-pointer hover:text-fuchsia-500 transition-colors"
-            >
-              Manage →
-            </span>
-          </div>
-          <div className="space-y-3">
-            {(tools.length > 0 ? tools.slice(0, 3) : [
-              { name: 'trip_analyzer', description: 'Analyzes destinations for safety, cost, and sentiment', type: 'skill' },
-              { name: 'weather_forecast', description: 'Real-time weather data for trip planning', type: 'skill' },
-              { name: 'local_recommender', description: 'AI-curated local food, culture, and activities', type: 'skill' },
-            ]).map((tool, i) => (
-              <div key={tool.name || i} onClick={() => navigate('/console')} className="flex items-center gap-4 bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-3 justify-between shadow-sm cursor-pointer hover:border-violet-300 dark:hover:border-violet-700 hover:shadow-md transition-all active:scale-[0.98]">
-                <div className="flex items-center gap-4">
-                  <div className="relative">
-                    <div className="size-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center border border-violet-200 dark:border-violet-800/30">
-                      <span className="material-symbols-outlined text-violet-500 dark:text-fuchsia-400 text-xl">
-                        {i === 0 ? 'analytics' : i === 1 ? 'cloud' : 'explore'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <div className="flex items-center gap-2">
-                      <p className="text-slate-900 dark:text-white text-base font-bold line-clamp-1">{tool.name}</p>
-                      <span className="text-[10px] bg-violet-100 dark:bg-violet-500/10 text-violet-600 dark:text-violet-300 px-1.5 rounded uppercase font-bold tracking-tighter">
-                        {tool.type || 'Skill'}
-                      </span>
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-normal line-clamp-1">{tool.description}</p>
-                  </div>
-                </div>
-                <div className="shrink-0 flex items-center gap-1 text-violet-500">
-                  <span className="material-symbols-outlined text-lg">play_arrow</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Telegram Bot Integration */}
-        <section>
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Telegram Bot</h2>
-            <span className="text-[10px] uppercase tracking-wider font-bold text-emerald-500">@Vogaye_bot</span>
-          </div>
-          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="size-12 rounded-xl bg-[#0088cc]/10 flex items-center justify-center border border-[#0088cc]/20">
-                <span className="material-symbols-outlined text-[#0088cc] text-xl">send</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-slate-900 dark:text-white text-base font-bold">@Vogaye_bot</p>
-                  <span className="size-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                </div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs">Chat ID: {import.meta.env.VITE_TELEGRAM_CHAT_ID || 'Not set'}</p>
-              </div>
-            </div>
-            <button
-              onClick={async () => {
-                try {
-                  await sendTelegramViaAgent('🦀 *TripClaw Bot Active!*\nYour agent is connected and ready to send travel alerts.');
-                  showToast('success', '✅ Message sent! Check your Telegram.');
-                } catch (err) {
-                  showToast('error', '❌ Error: ' + err.message);
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 h-11 rounded-lg bg-[#0088cc] text-white font-bold text-sm active:scale-[0.98] transition-transform shadow-lg shadow-[#0088cc]/20"
-            >
-              <span className="material-symbols-outlined text-lg">send</span>
-              Send Test Message
-            </button>
-          </div>
-        </section>
-
-        {/* Swarm Voting */}
-        <section>
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Swarm Voting</h2>
-            <span className="text-[10px] uppercase tracking-wider font-bold text-indigo-500 bg-indigo-500/10 px-2 py-0.5 rounded">On-Chain</span>
-          </div>
-          <div className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="size-12 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                <span className="material-symbols-outlined text-indigo-500 text-xl">how_to_vote</span>
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-slate-900 dark:text-white text-base font-bold">Decide the Next Activity</p>
-                </div>
-                <p className="text-slate-500 dark:text-slate-400 text-xs">Vote with your Swarm securely using Stellar Testnet.</p>
-              </div>
-            </div>
-            <button
-              onClick={() => navigate('/vote')}
-              className="w-full flex items-center justify-center gap-2 h-11 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 text-white font-bold text-sm active:scale-[0.98] transition-transform shadow-lg shadow-indigo-500/20"
-            >
-              <span className="material-symbols-outlined text-lg">how_to_vote</span>
-              Vote Now
-            </button>
-          </div>
-        </section>
-
-        {/* Live Agent Feed */}
-        <section>
-          <div className="flex items-center justify-between px-1 mb-3">
-            <h2 className="text-slate-900 dark:text-white text-xl font-bold tracking-tight">Travel Swarm: Live Intent Feed</h2>
-            <span className="flex items-center gap-1 text-violet-500 text-xs font-medium">
-              <span className="size-2 bg-violet-500 rounded-full animate-pulse"></span>
-              {isConnected ? 'Live' : 'Demo'}
-            </span>
-          </div>
-          <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-violet-300 dark:before:via-violet-800 before:to-transparent">
-            {displayEvents.map((event) => (
-              <div key={event.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white dark:border-[#1c2427] bg-violet-500/20 text-violet-500 shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                  <span className="material-symbols-outlined text-[18px]">smart_toy</span>
-                </div>
-                <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 p-3 rounded-xl shadow-sm">
-                  <div className="flex items-center justify-between space-x-2 mb-1">
-                    <div className="font-bold text-slate-900 dark:text-white text-sm">{event.agent}</div>
-                    <time className="font-medium text-violet-500 text-xs">{event.time}</time>
-                  </div>
-                  <div className="text-slate-500 dark:text-slate-400 text-xs">{event.action}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        <LiveFeed events={activeEvents} />
       </main>
 
-      {/* Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-background-dark/90 backdrop-blur-xl border-t border-slate-200 dark:border-white/5 px-6 pb-8 pt-4 z-50">
-        <div className="max-w-md mx-auto flex justify-between items-center">
-          <button className="flex flex-col items-center gap-1 text-violet-600 dark:text-fuchsia-400">
-            <span className="material-symbols-outlined font-bold">dashboard</span>
-            <span className="text-[10px] font-bold">Home</span>
-          </button>
-          <button onClick={() => navigate('/map')} className="flex flex-col items-center gap-1 text-slate-500">
-            <span className="material-symbols-outlined">map</span>
-            <span className="text-[10px] font-medium">Explore</span>
-          </button>
-
-          <button
+      {/* Persistent Bottom Nav (Floating) */}
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-[380px] h-16 bg-white/10 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/20 dark:border-slate-800 rounded-2xl shadow-2xl z-50 flex items-center justify-around px-4">
+        <button onClick={() => navigate('/dashboard')} className="flex flex-col items-center gap-1 text-violet-500">
+          <span className="material-symbols-outlined">home</span>
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Home</span>
+        </button>
+        <button onClick={() => navigate('/map')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+          <span className="material-symbols-outlined">explore</span>
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Map</span>
+        </button>
+        <div className="relative -top-6">
+          <button 
             onClick={() => navigate('/console')}
-            className="relative -top-8 size-14 rounded-full bg-gradient-to-br from-violet-600 to-fuchsia-500 shadow-lg shadow-violet-500/40 flex items-center justify-center text-white border-4 border-white dark:border-background-dark"
+            className="size-14 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center text-white shadow-xl shadow-violet-500/40 ring-4 ring-background-light dark:ring-background-dark transform active:scale-95 transition-transform"
           >
-            <span className="material-symbols-outlined text-[30px] font-bold">neurology</span>
-          </button>
-
-          <button onClick={() => navigate('/console')} className="flex flex-col items-center gap-1 text-slate-500">
-            <span className="material-symbols-outlined">hub</span>
-            <span className="text-[10px] font-medium">Skills</span>
-          </button>
-          <button onClick={() => navigate('/')} className="flex flex-col items-center gap-1 text-slate-500">
-            <span className="material-symbols-outlined">settings</span>
-            <span className="text-[10px] font-medium">Config</span>
+            <span className="material-symbols-outlined text-3xl">neurology</span>
           </button>
         </div>
+        <button onClick={() => navigate('/match')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+          <span className="material-symbols-outlined">local_activity</span>
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Match</span>
+        </button>
+        <button onClick={() => navigate('/passport')} className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors">
+          <span className="material-symbols-outlined">account_circle</span>
+          <span className="text-[9px] font-bold uppercase tracking-tighter">Profile</span>
+        </button>
       </nav>
     </div>
   );
