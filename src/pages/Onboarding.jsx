@@ -34,6 +34,27 @@ export default function Onboarding() {
   const [pairingCode, setPairingCode] = useState('');
   const [pairingStatus, setPairingStatus] = useState(null);
 
+  const from = location.state?.from?.pathname || "/dashboard";
+
+  // ── Auth State ──────────────────────────────────────────────
+  const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authNickname, setAuthNickname] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  const [authSuccess, setAuthSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [identity, setIdentity] = useState({
+    nickname: '',
+    travelerType: '',
+    companion: ''
+  });
+
+  // ── Effects ────────────────────────────────────────────────
   // Skip step 1 if already authenticated
   useEffect(() => {
     if (isAuthenticated && step === 1) {
@@ -59,26 +80,6 @@ export default function Onboarding() {
       navigate(from, { replace: true });
     }
   }, [isAuthenticated, user, navigate, from]);
-
-  const from = location.state?.from?.pathname || "/dashboard";
-
-  // ── Auth State ──────────────────────────────────────────────
-  const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [authNickname, setAuthNickname] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState(null);
-  const [authSuccess, setAuthSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [identity, setIdentity] = useState({
-    nickname: '',
-    travelerType: '',
-    companion: ''
-  });
 
   // ── Auth Handlers ───────────────────────────────────────────
   const handleAuth = async () => {
