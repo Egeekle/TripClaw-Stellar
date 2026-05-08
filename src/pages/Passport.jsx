@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import Logo from "../components/Logo";
 
 const badges = [
@@ -19,8 +20,9 @@ const visitedPlaces = [
 export default function Passport() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user: profile } = useAuth();
   const [showNewBadge, setShowNewBadge] = useState(false);
-  const profile = JSON.parse(localStorage.getItem('tripclaw_identity') || '{}');
+
 
   useEffect(() => {
     if (location.state?.newExperience) {
@@ -28,6 +30,8 @@ export default function Passport() {
       setTimeout(() => setShowNewBadge(false), 4000);
     }
   }, [location.state]);
+
+  if (!profile) return null;
 
   return (
     <div className="min-h-screen bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white">

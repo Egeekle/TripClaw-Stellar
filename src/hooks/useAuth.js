@@ -1,8 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { upsertIdentity, fetchProfile } from '../services/identityApi';
+import { STORAGE_KEYS } from '../config/constants';
+import { logger } from '../services/logger';
 
+/**
+ * @typedef {import('../services/identityApi').TripClawProfile} TripClawProfile
+ */
+
+/**
+ * @typedef {Object} AuthContextValue
+ * @property {TripClawProfile|null} user
+ * @property {any} session
+ * @property {boolean} loading
+ * @property {boolean} isAuthenticated
+ * @property {(profile: Partial<TripClawProfile>) => Promise<void>} updateProfile
+ * @property {() => Promise<void>} signOut
+ */
+
+/**
+ * Global authentication and identity hook.
+ * @returns {AuthContextValue}
+ */
 export function useAuth() {
+
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,7 +31,7 @@ export function useAuth() {
   // Load local identity as immediate state
   const getLocalProfile = () => {
     try {
-      return JSON.parse(localStorage.getItem('tripclaw_identity') || 'null');
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.IDENTITY) || 'null');
     } catch {
       return null;
     }
@@ -45,33 +66,48 @@ export function useAuth() {
 
   const syncProfile = async (supabaseUser) => {
     setLoading(true);
-    // Fetch profile from our 'users' table using metadata or email
-    const { data } = await fetchProfile(supabaseUser.user_metadata?.nickname || supabaseUser.email);
-    if (data) {
-      setUser(data);
-    } else {
-      // Fallback to metadata if table entry not yet created
-      setUser({
-        nickname: supabaseUser.user_metadata?.nickname,
-        email: supabaseUser.email,
-        level: 1,
-        xp: 0
-      });
+    try {
+      // Fetch profile from our 'users' table using metadata or email
+      const { data } = await fetchProfile(supabaseUser.user_metadata?.nickname || supabaseUser.email);
+      if (data) {
+        setUser(data);
+      } else {
+        // Fallback to metadata if table entry not yet created
+        setUser({
+          nickname: supabaseUser.user_metadata?.nickname,
+          email: supabaseUser.email,
+          level: 1,
+          xp: 0
+        });
+      }
+    } catch (error) {
+      logger.error('Failed to sync profile from cloud', error);
+      setUser(getLocalProfile());
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const updateProfile = useCallback(async (updates) => {
-    const newProfile = { ...user, ...updates };
-    setUser(newProfile);
-    await upsertIdentity(newProfile);
+    try {
+      const newProfile = { ...user, ...updates };
+      setUser(newProfile);
+      await upsertIdentity(newProfile);
+    } catch (error) {
+      logger.error('Profile update failed', error);
+      throw error;
+    }
   }, [user]);
 
   const signOut = async () => {
-    await supabase?.auth.signOut();
-    localStorage.removeItem('tripclaw_identity');
-    setUser(null);
-    setSession(null);
+    try {
+      await supabase?.auth.signOut();
+      localStorage.removeItem(STORAGE_KEYS.IDENTITY);
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      logger.error('Sign out failed', error);
+    }
   };
 
   return {
@@ -82,4 +118,5 @@ export function useAuth() {
     signOut,
     isAuthenticated: !!session?.user
   };
+
 }

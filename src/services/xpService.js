@@ -4,6 +4,9 @@
  * Now syncs to Supabase PostgreSQL via identityApi.
  */
 import { syncXpToCloud } from './identityApi';
+import { STORAGE_KEYS, EXPERIENCE_LEVELS } from '../config/constants';
+
+const LOCAL_KEY = STORAGE_KEYS.IDENTITY;
 
 const RANKS = [
   { maxLevel: 5, name: 'Novice Scout', color: 'from-slate-400 to-slate-600' },
@@ -11,6 +14,7 @@ const RANKS = [
   { maxLevel: 30, name: 'Swarm Sentinel', color: 'from-amber-400 to-orange-600' },
   { maxLevel: 100, name: 'Apex Explorer', color: 'from-violet-400 to-fuchsia-600' }
 ];
+
 
 export class XpEngine {
   constructor() {
@@ -46,7 +50,7 @@ export class XpEngine {
    * Now syncs to Supabase cloud in the background.
    */
   grantXp(actionType) {
-    const profile = JSON.parse(localStorage.getItem('tripclaw_identity') || '{}');
+    const profile = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}');
     if (!profile.nickname) return null;
 
     let xpReward = 0;
@@ -64,7 +68,7 @@ export class XpEngine {
     const newLevelData = this.calculateLevelFromXp(profile.xp);
     profile.level = newLevelData.level;
     
-    localStorage.setItem('tripclaw_identity', JSON.stringify(profile));
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(profile));
 
     // 🔄 Sync to Supabase PostgreSQL (fire-and-forget, non-blocking)
     syncXpToCloud(profile.nickname, profile.xp, profile.level);

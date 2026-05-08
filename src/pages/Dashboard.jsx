@@ -6,6 +6,7 @@ import WalletWidget from '../components/WalletWidget';
 import Logo from '../components/Logo';
 import AgentHero from '../components/dashboard/AgentHero';
 import LiveFeed from '../components/dashboard/LiveFeed';
+import { Card, Badge } from '../components/ui';
 
 const statusColor = {
   connected: 'bg-emerald-500',
@@ -61,8 +62,10 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <div className="relative">
               <Logo className="w-10 h-10" />
-              <div className="absolute -bottom-1 -right-1 bg-gradient-to-r from-violet-600 to-fuchsia-500 border border-violet-400 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-lg">
-                Lv.{identity?.level || 1}
+              <div className="absolute -bottom-1 -right-1">
+                <Badge variant="primary" className="bg-gradient-to-r from-violet-600 to-fuchsia-500 border border-violet-400 text-white lowercase">
+                  Lv.{identity?.level || 1}
+                </Badge>
               </div>
             </div>
             <div className="flex flex-col items-start">
@@ -89,20 +92,20 @@ export default function Dashboard() {
 
         {/* Quick Stats */}
         <section className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+          <Card hoverable className="flex flex-col gap-1">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Global Rep</p>
             <div className="flex items-center gap-2">
               <p className="text-xl font-black text-slate-900 dark:text-white">{identity?.reputationScore || 100}</p>
               <span className="material-symbols-outlined text-emerald-500 text-sm">trending_up</span>
             </div>
-          </div>
-          <div className="p-4 rounded-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-slate-800 shadow-sm flex flex-col gap-1">
+          </Card>
+          <Card hoverable className="flex flex-col gap-1">
             <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Missions Done</p>
             <div className="flex items-center gap-2">
               <p className="text-xl font-black text-slate-900 dark:text-white">3</p>
               <span className="material-symbols-outlined text-violet-500 text-sm">military_tech</span>
             </div>
-          </div>
+          </Card>
         </section>
 
         {/* Navigation Grid */}

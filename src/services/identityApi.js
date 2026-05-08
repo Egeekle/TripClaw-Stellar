@@ -4,10 +4,31 @@
  * Falls back gracefully to localStorage when Supabase is unavailable.
  */
 import { supabase } from '../lib/supabase';
+import { STORAGE_KEYS } from '../config/constants';
+import { logger } from './logger';
 
-const LOCAL_KEY = 'tripclaw_identity';
+const LOCAL_KEY = STORAGE_KEYS.IDENTITY;
+
+/**
+ * @typedef {Object} TripClawProfile
+ * @property {string} nickname
+ * @property {string} [email]
+ * @property {string} [travelerType]
+ * @property {string} [companion]
+ * @property {number} xp
+ * @property {number} level
+ * @property {number} reputationScore
+ * @property {string[]} visitedCities
+ * @property {string[]} unlockedSkills
+ * @property {string[]} badges
+ * @property {string} createdAt
+ * @property {string} [company_name]
+ */
 
 // ── Helpers ─────────────────────────────────────────────────
+/**
+ * @returns {TripClawProfile|null}
+ */
 function getLocal() {
   try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); }
   catch { return {}; }
@@ -22,6 +43,8 @@ function saveLocal(profile) {
 /**
  * Create or update user identity.
  * Writes to Supabase AND localStorage (dual-write for offline resilience).
+ * @param {TripClawProfile} profile
+ * @returns {Promise<{data: TripClawProfile, source: string}>}
  */
 export async function upsertIdentity(profile) {
   // Always save locally for instant UI
@@ -44,7 +67,7 @@ export async function upsertIdentity(profile) {
     .single();
 
   if (error) {
-    console.warn('[IdentityAPI] Supabase upsert failed, using localStorage:', error.message);
+    logger.warn('[IdentityAPI] Supabase upsert failed, using localStorage:', error.message);
     return { data: profile, source: 'local' };
   }
 
@@ -55,6 +78,8 @@ export async function upsertIdentity(profile) {
 
 /**
  * Fetch a user by nickname (public profile).
+ * @param {string} nickname
+ * @returns {Promise<{data: TripClawProfile|null, source: string}>}
  */
 export async function fetchProfile(nickname) {
   if (!supabase) return { data: getLocal(), source: 'local' };
@@ -66,7 +91,7 @@ export async function fetchProfile(nickname) {
     .single();
 
   if (error) {
-    console.warn('[IdentityAPI] Fetch failed:', error.message);
+    logger.warn('[IdentityAPI] Fetch failed:', error.message);
     return { data: getLocal(), source: 'local' };
   }
 

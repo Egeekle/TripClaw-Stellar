@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { useStellarWallet } from '../hooks/useStellarWallet';
+import { useAuth } from '../hooks/useAuth';
 import Logo from '../components/Logo';
 import { supabase } from '../lib/supabase';
 
@@ -24,12 +25,23 @@ const TOTAL_STEPS = 4;
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { pair, isGatewayOnline } = useOpenClaw();
   const { publicKey, connect, connecting } = useStellarWallet();
+  const { isAuthenticated, user, loading: authHookLoading } = useAuth();
   
   const [step, setStep] = useState(1);
   const [pairingCode, setPairingCode] = useState('');
   const [pairingStatus, setPairingStatus] = useState(null);
+
+  // Skip step 1 if already authenticated
+  useEffect(() => {
+    if (isAuthenticated && step === 1) {
+      setStep(2);
+    }
+  }, [isAuthenticated, step]);
+
+  const from = location.state?.from?.pathname || "/dashboard";
 
   // ── Auth State ──────────────────────────────────────────────
   const [authMode, setAuthMode] = useState('register'); // 'register' | 'login'
@@ -121,21 +133,7 @@ export default function Onboarding() {
   };
 
   const completeOnboarding = () => {
-    const userProfile = {
-      ...identity,
-      email,
-      authNickname,
-      companyName,
-      xp: 0,
-      level: 1,
-      reputationScore: 100,
-      visitedCities: [],
-      unlockedSkills: ['Basic Travel Analyzer'],
-      badges: [],
-      createdAt: new Date().toISOString()
-    };
-    localStorage.setItem('tripclaw_identity', JSON.stringify(userProfile));
-    navigate('/verify');
+    navigate(from, { replace: true });
   };
 
   const shortWallet = (addr) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
