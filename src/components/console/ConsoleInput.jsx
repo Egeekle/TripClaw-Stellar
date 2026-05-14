@@ -34,7 +34,7 @@ export default function ConsoleInput({ onSend, isThinking, isGatewayOnline }) {
             onKeyDown={handleKeyDown}
             placeholder={isGatewayOnline ? 'Message OpenClaw agent...' : 'Try a command (demo mode)...'}
             rows={1}
-            className="w-full resize-none rounded-xl bg-white dark:bg-[#1c2427] border border-slate-200 dark:border-white/10 px-4 py-3 pr-12 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all shadow-sm"
+            className="w-full resize-none rounded-xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-4 py-3 pr-12 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50 focus:border-violet-500 transition-all shadow-sm"
             style={{ minHeight: '44px', maxHeight: '120px' }}
             onInput={(e) => {
               e.target.style.height = 'auto';

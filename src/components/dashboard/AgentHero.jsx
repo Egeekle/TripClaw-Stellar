@@ -9,7 +9,7 @@ export default function AgentHero({ status, isGatewayOnline }) {
           <span className="material-symbols-outlined text-[14px]">psychology</span>
           OpenClaw Agent
         </div>
-        <div className="flex flex-col items-stretch justify-start rounded-xl overflow-hidden shadow-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-none">
+        <div className="flex flex-col items-stretch justify-start rounded-xl overflow-hidden shadow-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-none">
           <div className="w-full aspect-[16/9] relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-900 via-fuchsia-800 to-slate-900"></div>
             <div className="absolute inset-0 opacity-20" style={{
@@ -24,7 +24,7 @@ export default function AgentHero({ status, isGatewayOnline }) {
                 <Logo className="w-20 h-20" />
               </div>
             </div>
-            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#1c2427] to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0A0A0F] to-transparent"></div>
           </div>
 
           <div className="flex w-full flex-col items-stretch justify-center gap-1 p-5 -mt-12 relative z-10">

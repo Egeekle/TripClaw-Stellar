@@ -138,7 +138,7 @@ export default function Dashboard() {
 
           <button 
             onClick={() => navigate('/passport')}
-            className="group relative h-28 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c2427]"
+            className="group relative h-28 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-white/5"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/5 to-transparent"></div>
             <div className="p-4 flex flex-col items-start justify-between h-full">
@@ -152,7 +152,7 @@ export default function Dashboard() {
 
           <button 
             onClick={() => navigate('/vote')}
-            className="group relative h-28 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1c2427]"
+            className="group relative h-28 rounded-2xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-white/5"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-transparent"></div>
             <div className="p-4 flex flex-col items-start justify-between h-full">

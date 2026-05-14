@@ -25,7 +25,7 @@ export default function ToolsTab({ tools, runSkill, isThinking, setActiveTab }) 
   return (
     <div className="p-4 space-y-3">
       {displayTools.map((tool, i) => (
-        <div key={tool.name || i} className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
+        <div key={tool.name || i} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl overflow-hidden shadow-sm transition-all hover:shadow-md">
           <div className="p-4">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">

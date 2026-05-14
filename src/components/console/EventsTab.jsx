@@ -11,7 +11,7 @@ export default function EventsTab({ agentEvents }) {
         </div>
       ) : (
         agentEvents.map((event) => (
-          <div key={event.id} className="bg-white dark:bg-[#1c2427]/50 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm hover:border-violet-300/30 transition-colors">
+          <div key={event.id} className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 rounded-xl p-4 shadow-sm hover:border-violet-300/30 transition-colors">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Badge variant={

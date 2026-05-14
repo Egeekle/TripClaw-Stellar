@@ -150,7 +150,7 @@ export default function Map() {
       {/* Agent Insight Modal */}
       {agentInsight && (
         <div className="absolute inset-x-0 top-1/3 z-[2000] px-4 pointer-events-auto">
-          <div className="bg-white/95 dark:bg-[#1c2427]/95 backdrop-blur-2xl border border-violet-200 dark:border-violet-800/50 rounded-2xl p-5 shadow-2xl max-w-md mx-auto">
+          <div className="bg-white/95 dark:bg-white/5 backdrop-blur-2xl border border-violet-200 dark:border-violet-800/50 rounded-2xl p-5 shadow-2xl max-w-md mx-auto">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <div className="size-8 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center">

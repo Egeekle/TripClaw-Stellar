@@ -23,7 +23,7 @@ export default function LiveFeed({ events }) {
           events.map((event) => (
             <div 
               key={event.id} 
-              className="group p-4 rounded-2xl bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex items-start gap-4 animate-in slide-in-from-bottom-2 duration-300"
+              className="group p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex items-start gap-4 animate-in slide-in-from-bottom-2 duration-300"
             >
               <div className="size-10 rounded-xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 flex items-center justify-center shrink-0 border border-violet-500/20">
                 <span className="material-symbols-outlined text-violet-500 text-xl">person_search</span>

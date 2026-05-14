@@ -54,7 +54,7 @@ export function Button({
  */
 export function Card({ children, className = '', padded = true, hoverable = false }) {
   return (
-    <div className={`bg-white dark:bg-[#1c2427] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm ${padded ? 'p-5' : ''} ${hoverable ? 'hover:shadow-md hover:border-violet-300 dark:hover:border-violet-500/50 transition-all' : ''} ${className}`}>
+    <div className={`bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm ${padded ? 'p-5' : ''} ${hoverable ? 'hover:shadow-md hover:border-violet-300 dark:hover:border-violet-500/50 transition-all' : ''} ${className}`}>
       {children}
     </div>
   );

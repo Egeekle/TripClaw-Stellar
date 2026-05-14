@@ -54,7 +54,7 @@ export default function ChatTab({ messages, isThinking, isGatewayOnline, runSkil
               className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white rounded-br-md shadow-lg shadow-violet-500/20'
-                  : 'bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-bl-md shadow-sm'
+                  : 'bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-200 rounded-bl-md shadow-sm'
               }`}
             >
               <p className="whitespace-pre-wrap">{msg.content || msg.text}</p>
@@ -77,7 +77,7 @@ export default function ChatTab({ messages, isThinking, isGatewayOnline, runSkil
             <div className="shrink-0 size-8 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center shadow-md">
               <span className="material-symbols-outlined text-white text-sm animate-spin">progress_activity</span>
             </div>
-            <div className="bg-white dark:bg-[#1c2427] border border-slate-100 dark:border-white/5 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
+            <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 px-4 py-3 rounded-2xl rounded-bl-md shadow-sm">
               <div className="flex items-center gap-2 text-violet-500 text-sm">
                 <div className="flex gap-1">
                   <span className="size-1.5 bg-violet-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
