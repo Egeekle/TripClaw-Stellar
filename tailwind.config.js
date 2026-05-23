@@ -8,11 +8,20 @@ export default {
   theme: {
     extend: {
       colors: {
-        "primary": "#7c3aed",
-        "background-light": "#f6f8f8",
-        "background-dark": "#0A0A0F",
-        "accent-purple": "#8B5CF6",
-        "accent-pink": "#D946EF",
+        primary: "var(--primary)",
+        accent: "var(--accent)",
+        secondary: "var(--secondary)",
+        success: "var(--success)",
+        "background-light": "var(--background-light)",
+        "background-dark": "var(--background-dark)",
+        foreground: "var(--foreground-dark)",
+        "foreground-light": "var(--foreground-light)",
+        "foreground-dark": "var(--foreground-dark)",
+      },
+      backgroundImage: {
+        "gradient-primary": "linear-gradient(to right, var(--primary), var(--secondary))",
+        "gradient-sky": "linear-gradient(to right, var(--accent), var(--background-light))",
+        "gradient-sky-dark": "linear-gradient(to right, var(--accent), var(--background-dark))",
       },
       fontFamily: {
         "display": ["Space Grotesk", "sans-serif"]
@@ -22,3 +31,4 @@ export default {
   },
   plugins: [],
 }
+

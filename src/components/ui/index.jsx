@@ -18,9 +18,9 @@ export function Button({
   const baseStyles = "inline-flex items-center justify-center font-bold transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none rounded-xl tracking-tight";
   
   const variants = {
-    primary: "bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40",
-    secondary: "bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/20",
-    outline: "bg-transparent border-2 border-violet-600 text-violet-600 dark:border-fuchsia-500 dark:text-fuchsia-400 hover:bg-violet-600/10",
+    primary: "bg-gradient-primary text-white shadow-lg shadow-primary/20 hover:shadow-primary/40",
+    secondary: "bg-white dark:bg-white/10 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-white/20",
+    outline: "bg-transparent border-2 border-primary text-primary hover:bg-primary/5",
     ghost: "bg-transparent text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5",
     danger: "bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/20"
   };
@@ -54,7 +54,7 @@ export function Button({
  */
 export function Card({ children, className = '', padded = true, hoverable = false }) {
   return (
-    <div className={`bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm ${padded ? 'p-5' : ''} ${hoverable ? 'hover:shadow-md hover:border-violet-300 dark:hover:border-violet-500/50 transition-all' : ''} ${className}`}>
+    <div className={`bg-white dark:bg-white/5 border border-slate-200 dark:border-slate-850 rounded-2xl shadow-sm ${padded ? 'p-5' : ''} ${hoverable ? 'hover:shadow-md hover:border-primary/45 dark:hover:border-primary/45 transition-all' : ''} ${className}`}>
       {children}
     </div>
   );
@@ -66,7 +66,7 @@ export function Card({ children, className = '', padded = true, hoverable = fals
 export function Badge({ children, variant = 'default', className = '' }) {
   const variants = {
     default: "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400",
-    primary: "bg-violet-100 dark:bg-violet-500/20 text-violet-600 dark:text-violet-400",
+    primary: "bg-primary/10 dark:bg-primary/20 text-primary border border-primary/20",
     success: "bg-emerald-100 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
     warning: "bg-amber-100 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
     danger: "bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-400"
@@ -78,3 +78,4 @@ export function Badge({ children, variant = 'default', className = '' }) {
     </span>
   );
 }
+

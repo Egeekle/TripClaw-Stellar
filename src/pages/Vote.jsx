@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStellarWallet } from '../hooks/useStellarWallet';
 import { getVotes, checkHasVoted, buildVoteTx, submitSignedTx, VOTE_OPTIONS, CONTRACT_ID } from '../services/stellarSoroban';
+import PageHeader from '../components/PageHeader';
+import BottomNav from '../components/BottomNav';
+import { Card, Badge } from '../components/ui';
 
 export default function Vote() {
   const navigate = useNavigate();
@@ -79,65 +82,57 @@ export default function Vote() {
     submitting: 'Enviando a Stellar Testnet...',
   };
 
-  const isMockMode = !CONTRACT_ID || !CONTRACT_ID.startsWith('C');
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-950 to-slate-900 text-white overflow-y-auto w-full absolute inset-0 pb-20">
-      <header className="sticky top-0 z-10 px-6 py-4 bg-slate-900/50 backdrop-blur-md border-b border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex size-8 items-center justify-center rounded-lg bg-slate-800 text-slate-300 hover:text-white transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">arrow_back</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-indigo-400 text-2xl">how_to_vote</span>
-            <h1 className="text-lg font-bold tracking-tight">Swarm Voting</h1>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen pb-24 md:pb-6 bg-background-light dark:bg-background-dark text-slate-900 dark:text-white flex flex-col font-display transition-colors">
+      
+      {/* Header */}
+      <PageHeader 
+        title="Votación de Enjambre" 
+        subtitle="Gobernanza"
+        showBack={true}
+        backTo="/dashboard"
+      />
 
-      <main className="max-w-xl mx-auto px-4 py-8 md:py-12">
+      <main className="flex-1 max-w-2xl mx-auto px-4 py-8 md:py-12 w-full">
         <header className="text-center mb-10">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">
+          <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">
             Decide el Destino 🗺️
           </h1>
-          <p className="text-slate-400">
-            Vota on-chain por la próxima actividad de tu Travel Swarm.
+          <p className="text-slate-500 dark:text-slate-400 text-sm">
+            Vota on-chain por la próxima actividad prioritaria de tu enjambre de viaje.
           </p>
         </header>
 
-        {/* Wallet Connection */}
+        {/* Wallet Connection Status */}
         {publicKey ? (
-          <div className="flex items-center justify-between p-4 bg-slate-800 rounded-xl mb-8 border border-slate-700">
+          <div className="flex items-center justify-between p-4 bg-white dark:bg-[#2b2724] border border-slate-200 dark:border-slate-800 rounded-2xl mb-8 shadow-sm">
             <div>
-              <span className="text-green-400 text-sm font-medium flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-green-500 animate-pulse"></span>
-                Conectado
+              <span className="text-success text-xs font-bold flex items-center gap-1.5 uppercase">
+                <span className="size-2 rounded-full bg-success animate-pulse"></span>
+                Wallet Conectada
               </span>
-              <p className="font-mono text-sm text-slate-300 mt-1">
+              <p className="font-mono text-sm text-slate-700 dark:text-slate-300 mt-1 font-semibold">
                 {short(publicKey)}
               </p>
             </div>
             <button
               onClick={disconnect}
-              className="text-sm text-slate-400 hover:text-red-400 transition-colors"
+              className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-wider"
             >
               Desconectar
             </button>
           </div>
         ) : (
-          <div className="mb-8 text-center p-6 bg-slate-800/50 rounded-xl border border-slate-700">
-            <span className="material-symbols-outlined text-4xl text-slate-500 mb-3">lock</span>
+          <div className="mb-8 text-center p-6 bg-white dark:bg-[#2b2724]/40 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm">
+            <span className="material-symbols-outlined text-4xl text-slate-400 mb-3">lock</span>
             <button
               onClick={connect}
               disabled={connecting}
-              className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl font-semibold transition-colors"
+              className="w-full py-3.5 px-6 bg-primary hover:bg-primary/95 text-white disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl font-bold transition-all shadow-md shadow-primary/20"
             >
               {connecting ? 'Conectando...' : 'Conectar Freighter Wallet'}
             </button>
-            <p className="mt-3 text-slate-500 text-xs">
+            <p className="mt-3 text-slate-400 text-xs font-medium">
               Necesitas la extensión Freighter configurada en Testnet.
             </p>
           </div>
@@ -146,17 +141,17 @@ export default function Vote() {
         {loading ? (
           <div className="text-center py-12 text-slate-400">
             <span className="material-symbols-outlined animate-spin text-4xl mb-4">refresh</span>
-            <p>Cargando votos desde Soroban...</p>
+            <p className="text-sm font-bold uppercase tracking-wider">Cargando votos desde Soroban...</p>
           </div>
         ) : (
-          <>
+          <div className="space-y-6">
             {publicKey && !hasVoted && (
-              <div className="mb-6 p-6 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-xl">
-                <h2 className="text-xl font-semibold mb-1">
-                  ¿Qué actividad priorizamos?
+              <div className="mb-6 p-6 bg-white dark:bg-[#2b2724] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-md">
+                <h2 className="text-lg font-black text-slate-900 dark:text-white mb-1">
+                  ¿Qué actividad priorizamos esta semana?
                 </h2>
-                <p className="text-slate-400 text-sm mb-6">
-                  Tu voto quedará registrado de manera inmutable en Stellar Testnet
+                <p className="text-slate-500 dark:text-slate-400 text-xs mb-6 font-medium">
+                  Tu voto quedará registrado de manera inmutable en Stellar Soroban Testnet.
                 </p>
 
                 <div className="space-y-3 mb-6">
@@ -164,10 +159,10 @@ export default function Vote() {
                     <button
                       key={option.id}
                       onClick={() => !voteLoading && setSelected(option.id)}
-                      className={`w-full p-4 rounded-xl text-left transition-all border ${
+                      className={`w-full p-4 rounded-xl text-left transition-all border font-bold text-sm ${
                         selected === option.id
-                          ? 'bg-indigo-600 border-indigo-500 text-white shadow-lg shadow-indigo-500/20'
-                          : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-400 hover:bg-slate-700'
+                          ? 'bg-primary border-primary text-white shadow-lg shadow-primary/25'
+                          : 'bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:border-slate-400 dark:hover:bg-slate-800'
                       }`}
                     >
                       {option.label}
@@ -178,56 +173,54 @@ export default function Vote() {
                 <button
                   onClick={handleVote}
                   disabled={!selected || voteLoading}
-                  className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500
-                            disabled:bg-slate-700 disabled:cursor-not-allowed
-                            rounded-xl font-bold transition-colors shadow-lg shadow-indigo-500/20"
+                  className="w-full py-3.5 bg-primary hover:bg-primary/95 text-white disabled:bg-slate-700 disabled:cursor-not-allowed rounded-xl font-bold transition-all shadow-lg shadow-primary/20 active:scale-95"
                 >
                   {voteLoading && step !== 'idle' ? stepLabel[step] : 'Firmar Voto On-Chain'}
                 </button>
 
                 {error && (
-                  <p className="mt-4 text-red-400 text-sm text-center bg-red-900/20 p-2 rounded border border-red-900/50">{error}</p>
+                  <p className="mt-4 text-red-500 text-xs font-bold text-center bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">{error}</p>
                 )}
 
                 {txHash && (
-                  <p className="mt-4 text-green-400 text-xs text-center font-mono bg-green-900/20 p-2 rounded border border-green-900/50 break-all">
-                    TX: {txHash}
+                  <p className="mt-4 text-success text-[10px] text-center font-mono bg-success/10 p-2.5 rounded-xl border border-success/20 break-all font-semibold">
+                    TRANSACCIÓN: {txHash}
                   </p>
                 )}
               </div>
             )}
 
             {publicKey && hasVoted && (
-              <div className="mb-6 p-5 bg-green-900/20 border border-green-700/50 rounded-2xl text-center shadow-lg">
-                <div className="size-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-green-500/30">
-                  <span className="material-symbols-outlined text-green-400 text-2xl">verified</span>
+              <div className="mb-6 p-5 bg-success/10 border border-success/20 rounded-2xl text-center shadow-sm">
+                <div className="size-12 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-3 border border-success/30">
+                  <span className="material-symbols-outlined text-success text-2xl font-bold">verified</span>
                 </div>
-                <p className="text-green-400 font-bold text-lg mb-1">
-                  Tu voto está on-chain
+                <p className="text-success font-black text-lg mb-1 leading-tight">
+                  Tu voto está registrado on-chain
                 </p>
-                <p className="text-slate-300 text-sm">
-                  Gracias por participar en la decisión del Swarm.
+                <p className="text-slate-500 dark:text-slate-400 text-xs font-medium">
+                  Gracias por participar activamente en la gobernanza colectiva de Aquisito.
                 </p>
               </div>
             )}
 
             {!publicKey && (
-              <p className="text-center text-slate-500 text-sm mb-6 flex items-center justify-center gap-2">
-                <span className="material-symbols-outlined text-sm">info</span>
-                Conecta tu wallet para participar en la votación
+              <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-wider mb-6 flex items-center justify-center gap-1.5">
+                <span className="material-symbols-outlined text-base">info</span>
+                Conecta tu wallet para participar en la decisión del enjambre
               </p>
             )}
 
             {/* Results Section */}
-            <div className="p-6 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-xl">
+            <div className="p-6 bg-white dark:bg-[#2b2724] border border-slate-200 dark:border-slate-800 rounded-3xl shadow-md">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <span className="material-symbols-outlined text-indigo-400">bar_chart</span>
+                <h2 className="text-lg font-black flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">bar_chart</span>
                   Resultados en vivo
                 </h2>
-                <span className="bg-indigo-900/50 text-indigo-300 text-xs px-2.5 py-1 rounded-full border border-indigo-500/30 font-medium">
+                <Badge variant="primary" className="bg-primary/10 border border-primary/20 text-primary font-bold">
                   {totalVoters} {totalVoters === 1 ? 'voto' : 'votos'}
-                </span>
+                </Badge>
               </div>
 
               <div className="space-y-5">
@@ -239,15 +232,15 @@ export default function Vote() {
 
                   return (
                     <div key={option.id}>
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="text-slate-200 font-medium">{option.label}</span>
-                        <span className="text-slate-400 tabular-nums font-bold">
+                      <div className="flex justify-between text-xs font-bold mb-2">
+                        <span className="text-slate-700 dark:text-slate-300">{option.label}</span>
+                        <span className="text-slate-400 font-mono">
                           {count} ({percentage}%)
                         </span>
                       </div>
-                      <div className="h-2.5 bg-slate-700/50 rounded-full overflow-hidden border border-slate-700">
+                      <div className="h-2.5 bg-slate-100 dark:bg-slate-900/60 rounded-full overflow-hidden border border-slate-200 dark:border-slate-800">
                         <div
-                          className="h-full bg-gradient-to-r from-indigo-500 to-violet-500 rounded-full transition-all duration-1000 ease-out"
+                          className="h-full bg-gradient-primary rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${barWidth}%` }}
                         />
                       </div>
@@ -257,19 +250,22 @@ export default function Vote() {
               </div>
 
               {totalVoters === 0 && (
-                <div className="text-center mt-6 p-4 bg-slate-700/20 rounded-xl border border-slate-700/50">
-                  <p className="text-slate-400 text-sm">Aún no hay votos. ¡Sé el primero en elegir el destino!</p>
+                <div className="text-center mt-6 p-4 bg-slate-50 dark:bg-slate-950/20 rounded-xl border border-slate-200 dark:border-slate-850">
+                  <p className="text-slate-400 text-xs font-medium">Aún no hay votos registrados. ¡Sé el primero en elegir el rumbo!</p>
                 </div>
               )}
 
-              <div className="mt-6 pt-4 border-t border-slate-700/50 flex items-center justify-center gap-1.5 text-slate-500 text-[11px] font-medium uppercase tracking-wider">
-                <span className="material-symbols-outlined text-[14px]">sync</span>
-                Actualización en tiempo real · Soroban Testnet
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                <span className="material-symbols-outlined text-[14px] animate-spin">sync</span>
+                Soroban Testnet · Actualizado en tiempo real
               </div>
             </div>
-          </>
+          </div>
         )}
       </main>
+
+      {/* Bottom Nav */}
+      <BottomNav />
     </div>
   );
 }

@@ -134,51 +134,55 @@ export default function Onboarding() {
 
   if (authHookLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0A0A0F]">
+      <div className="min-h-screen flex items-center justify-center bg-background-dark">
         <div className="flex flex-col items-center gap-4">
-          <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center shadow-lg animate-pulse">
+          <div className="size-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg animate-pulse">
             <span className="material-symbols-outlined text-white text-2xl">neurology</span>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Sincronizando explorador...</p>
+          <p className="text-slate-400 text-sm font-medium">Sincronizando explorador...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[430px] mx-auto min-h-screen flex flex-col relative pb-24 bg-[#0A0A0F] text-white">
-      <OnboardingProgress step={step} label={stepLabel} totalSteps={TOTAL_STEPS} />
+    <div className="w-full max-w-md mx-auto min-h-screen flex flex-col justify-between relative pb-28 bg-background-dark text-white px-4">
+      <div className="w-full">
+        <OnboardingProgress step={step} label={stepLabel} totalSteps={TOTAL_STEPS} />
 
-      {step === 1 && (
-        <StepAccount 
-          authMode={authMode} setAuthMode={setAuthMode}
-          email={email} setEmail={setEmail}
-          password={password} setPassword={setPassword}
-          confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
-          authNickname={authNickname} setAuthNickname={setAuthNickname}
-          companyName={companyName} setCompanyName={setCompanyName}
-          authLoading={authLoading} authError={authError} authSuccess={authSuccess}
-          showPassword={showPassword} setShowPassword={setShowPassword}
-          handleAuth={handleAuth}
-        />
-      )}
+        <div className="mt-8">
+          {step === 1 && (
+            <StepAccount 
+              authMode={authMode} setAuthMode={setAuthMode}
+              email={email} setEmail={setEmail}
+              password={password} setPassword={setPassword}
+              confirmPassword={confirmPassword} setConfirmPassword={setConfirmPassword}
+              authNickname={authNickname} setAuthNickname={setAuthNickname}
+              companyName={companyName} setCompanyName={setCompanyName}
+              authLoading={authLoading} authError={authError} authSuccess={authSuccess}
+              showPassword={showPassword} setShowPassword={setShowPassword}
+              handleAuth={handleAuth}
+            />
+          )}
 
-      {step === 2 && (
-        <StepConnection 
-          isGatewayOnline={isGatewayOnline}
-          pairingCode={pairingCode} setPairingCode={setPairingCode}
-          pairingStatus={pairingStatus} handlePair={handlePair}
-          publicKey={publicKey} connect={connect} connecting={connecting}
-          shortWallet={shortWallet}
-        />
-      )}
+          {step === 2 && (
+            <StepConnection 
+              isGatewayOnline={isGatewayOnline}
+              pairingCode={pairingCode} setPairingCode={setPairingCode}
+              pairingStatus={pairingStatus} handlePair={handlePair}
+              publicKey={publicKey} connect={connect} connecting={connecting}
+              shortWallet={shortWallet}
+            />
+          )}
 
-      {step === 3 && <StepIdentity identity={identity} setIdentity={setIdentity} />}
-      
-      {step === 4 && <StepCompanion identity={identity} setIdentity={setIdentity} />}
+          {step === 3 && <StepIdentity identity={identity} setIdentity={setIdentity} />}
+          
+          {step === 4 && <StepCompanion identity={identity} setIdentity={setIdentity} />}
+        </div>
+      </div>
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto p-4 bg-gradient-to-t from-[#0A0A0F] via-[#0A0A0F] to-transparent z-50">
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-4 bg-gradient-to-t from-background-dark via-background-dark to-transparent z-50">
         <div className="flex gap-3">
           {step > 1 && (
             <button 
@@ -196,9 +200,9 @@ export default function Onboarding() {
                 else if (step === TOTAL_STEPS && identity.companion) completeOnboarding();
               }}
               disabled={!canContinue()}
-              className="flex-1 flex cursor-pointer items-center justify-center rounded-xl h-14 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white text-lg font-bold shadow-lg shadow-violet-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
+              className="flex-1 flex cursor-pointer items-center justify-center rounded-xl h-14 bg-gradient-primary text-white text-lg font-bold shadow-lg shadow-primary/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:grayscale"
             >
-              {step === TOTAL_STEPS ? 'Verificar Identidad →' : 'Continuar'}
+              {step === TOTAL_STEPS ? 'Completar Registro' : 'Continuar'}
             </button>
           )}
         </div>
@@ -213,3 +217,4 @@ export default function Onboarding() {
     </div>
   );
 }
+

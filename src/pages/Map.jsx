@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { sendTelegramViaAgent } from '../services/openclawApi';
 import { xpService } from '../services/xpService';
 import { useMapEngine } from '../hooks/useMapEngine';
-import { createSwarmIcon, createAgentIcon } from '../utils/mapIcons';
 import { SWARMS } from '../config/mapData';
 import HiddenDiscoveryOverlay from '../components/HiddenDiscoveryOverlay';
 import LevelUpModal from '../components/LevelUpModal';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+import MapView from '../components/MapView';
+import PageHeader from '../components/PageHeader';
+import BottomNav from '../components/BottomNav';
+import { Card, Badge } from '../components/ui';
 
 export default function Map() {
   const navigate = useNavigate();
@@ -20,6 +21,7 @@ export default function Map() {
   const [selectedCity, setSelectedCity] = useState(null);
   const [agentInsight, setAgentInsight] = useState(null);
   const [levelUpData, setLevelUpData] = useState(null);
+  const [activeFilter, setActiveFilter] = useState('Todos');
 
   // Handle city click — invoke trip_analyzer skill explicitly
   const handleCityClick = async (city) => {
@@ -40,200 +42,217 @@ export default function Map() {
         loading: false,
         city: city.name,
         text: result?.demo
-          ? `📍 ${city.name} — Connect to ZeroClaw to get real AI analysis. The trip_analyzer skill will evaluate safety, costs, crowds, and hidden gems.`
-          : `Analyzing ${city.name}... Check the console for the full agent response.`,
+          ? `📍 ${city.name} — Conéctate a Agente Aquisito para recibir un análisis con IA real. La habilidad trip_analyzer evaluará seguridad, costos, multitudes y joyas ocultas.`
+          : `Analizando ${city.name}... Consulta la consola del agente para ver la respuesta completa.`,
       });
     }
 
     if (telegramEnabled) {
-      sendTelegramViaAgent(`📍 *TripClaw Explorer*\nUser explored *${city.name}* via OpenClaw agent map.`);
+      sendTelegramViaAgent(`📍 *Aquisito Explorer*\nUsuario exploró *${city.name}* a través del mapa de agentes.`);
     }
   };
 
+  // Filter swarms based on selected filter category
+  const filteredSwarms = activeFilter === 'Todos' 
+    ? SWARMS 
+    : SWARMS.filter(swarm => {
+        if (activeFilter === 'Aventura') return swarm.type === 'Adventure';
+        if (activeFilter === 'Gastronomía') return swarm.type === 'Gastronomy';
+        if (activeFilter === 'Cultura') return swarm.type === 'Culture' || swarm.type === 'History';
+        if (activeFilter === 'Naturaleza') return swarm.type === 'Nature' || swarm.type === 'Wilderness';
+        return true;
+      });
+
+  const categories = ['Todos', 'Aventura', 'Gastronomía', 'Cultura', 'Naturaleza'];
+
   return (
-    <div className="relative flex h-screen w-full flex-col overflow-hidden font-display text-slate-900 dark:text-white bg-background-light dark:bg-background-dark">
-      {/* Top HUD */}
-      <div className="absolute top-0 left-0 right-0 z-[1000] bg-gradient-to-b from-white/90 dark:from-background-dark/90 to-transparent p-4 pointer-events-none">
-        <div className="flex items-center justify-between mb-4 mt-2 pointer-events-auto">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="flex size-10 items-center justify-center rounded-full bg-white/80 dark:bg-background-dark/80 border border-slate-200 dark:border-violet-500/30 text-slate-900 dark:text-white shadow-sm"
-            >
-              <span className="material-symbols-outlined">arrow_back_ios_new</span>
-            </button>
-            <div>
-              <h2 className="text-slate-900 dark:text-white text-lg font-bold leading-tight tracking-tight">Peru Explorer Map</h2>
-              <p className="text-violet-500 text-xs font-medium uppercase tracking-widest flex items-center gap-1">
-                OpenClaw Swarm
-                {isConnected && (
-                  <span className="size-2 bg-emerald-500 rounded-full animate-pulse inline-block ml-1" title="OpenClaw Gateway Connected"></span>
-                )}
-              </p>
-            </div>
+    <div className="relative min-h-screen flex flex-col font-display text-slate-900 dark:text-white bg-background-light dark:bg-background-dark pb-24 md:pb-6 transition-colors">
+      
+      {/* Reusable Responsively Styled PageHeader */}
+      <PageHeader 
+        title="Mapa Explorador" 
+        subtitle="Exploración de Enjambres"
+        showBack={false}
+      />
+
+      {/* Main Responsive Grid Layout */}
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-160px)] min-h-[500px]">
+        
+        {/* Left Column: Custom Vintage Map (Occupies 2/3 cols on desktop) */}
+        <div className="lg:col-span-2 flex flex-col h-full gap-4">
+          
+          {/* Category Filters row above map */}
+          <div className="flex gap-2 overflow-x-auto pb-1 shrink-0 scrollbar-none">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveFilter(cat)}
+                className={`px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                  activeFilter === cat
+                    ? 'bg-primary border-primary text-white shadow-sm'
+                    : 'bg-white dark:bg-slate-800/80 border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => navigate('/console')}
-              className="flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-600/20 to-fuchsia-500/20 border border-violet-200 dark:border-violet-700/50 text-violet-600 dark:text-fuchsia-400 shadow-sm"
-            >
-              <span className="material-symbols-outlined">terminal</span>
-            </button>
-            <button className="flex size-10 items-center justify-center rounded-full bg-white/80 dark:bg-background-dark/80 border border-slate-200 dark:border-violet-500/30 text-violet-500 shadow-sm relative">
-              <span className="material-symbols-outlined">smart_toy</span>
-              <span className="absolute -top-1 -right-1 bg-violet-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">{agents.length}</span>
-            </button>
+
+          {/* Custom Map View Component */}
+          <div className="flex-1 min-h-[380px] md:min-h-[450px] relative">
+            <MapView 
+              swarms={filteredSwarms}
+              agents={agents}
+              selectedCity={selectedCity}
+              onCityClick={handleCityClick}
+            />
           </div>
         </div>
 
-        {/* Stats Row */}
-        <div className="flex gap-3 pointer-events-auto">
-          <div className="flex flex-1 flex-col gap-1 rounded-xl p-3 bg-white/60 dark:bg-background-dark/60 border border-slate-200 dark:border-white/10 backdrop-blur-md shadow-sm">
-            <p className="text-slate-500 dark:text-[#9db2b9] text-[10px] font-bold uppercase tracking-wider">Active Agents</p>
-            <div className="flex items-baseline gap-1">
-              <p className="text-slate-900 dark:text-white text-xl font-bold">{agents.length}</p>
-              <span className="text-violet-500 text-[10px]">OpenClaw</span>
+        {/* Right Column: Agents and Missions list sidebar (Occupies 1/3 cols on desktop) */}
+        <div className="flex flex-col gap-6 h-full overflow-y-auto lg:border-l lg:border-slate-200 lg:dark:border-slate-800 lg:pl-6">
+          
+          {/* Active Agents HUD block */}
+          <section className="space-y-3 shrink-0">
+            <div className="flex justify-between items-center">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Agentes Enjambre</h3>
+              <Badge variant="primary" className="bg-accent/15 border border-accent/30 text-accent font-bold">
+                {agents.length} activos
+              </Badge>
             </div>
-          </div>
-          <div className="flex flex-1 flex-col gap-1 rounded-xl p-3 bg-white/60 dark:bg-background-dark/60 border border-slate-200 dark:border-white/10 backdrop-blur-md shadow-sm">
-            <p className="text-slate-500 dark:text-[#9db2b9] text-[10px] font-bold uppercase tracking-wider">Avg Sentiment</p>
-            <div className="flex items-baseline gap-1">
-              <p className="text-slate-900 dark:text-white text-xl font-bold">
-                {agents.length ? Math.round(agents.reduce((acc, curr) => acc + (curr.sentiment || 50), 0) / agents.length) : 0}%
-              </p>
-              <span className="material-symbols-outlined text-emerald-500 text-sm">trending_up</span>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sincronización</span>
+                <span className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+                  <span className={`size-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`}></span>
+                  {isConnected ? 'En Línea' : 'Modo Demo'}
+                </span>
+              </div>
+
+              <div className="bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-3 flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Opinión Promedio</span>
+                <span className="text-sm font-black text-slate-800 dark:text-white flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm text-amber-500">sentiment_satisfied</span>
+                  {agents.length ? Math.round(agents.reduce((acc, curr) => acc + (curr.sentiment || 50), 0) / agents.length) : 0}%
+                </span>
+              </div>
             </div>
-          </div>
+          </section>
+
+          {/* Cities / Swarms List section */}
+          <section className="flex-1 flex flex-col gap-3 min-h-0">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 shrink-0">Misiones y Destinos</h3>
+            
+            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+              {filteredSwarms.map((swarm) => {
+                const isSelected = selectedCity && selectedCity.id === swarm.id;
+                return (
+                  <Card 
+                    key={swarm.id}
+                    hoverable
+                    onClick={() => handleCityClick(swarm)}
+                    className={`cursor-pointer transition-all duration-300 ${
+                      isSelected 
+                        ? 'border-primary ring-2 ring-primary/20 bg-primary/5' 
+                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-white/5'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex gap-3">
+                        <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          isSelected ? 'bg-primary text-white' : 'bg-slate-100 dark:bg-slate-800 text-primary'
+                        }`}>
+                          <span className="material-symbols-outlined text-lg">{swarm.icon}</span>
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white leading-tight">
+                            {swarm.name}
+                          </h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                            Categoría: {swarm.type}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <Badge variant="success" className="bg-success/15 border border-success/30 text-success text-[8px] font-bold">
+                        {swarm.members} misiones
+                      </Badge>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          </section>
+
+          {/* Telegram and Gateway controls at bottom of list */}
+          <section className="space-y-2 shrink-0 pt-4 border-t border-slate-200 dark:border-slate-800/80">
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-white dark:bg-slate-800/30 border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-semibold">
+              <span className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg text-primary">send</span>
+                Alertas Telegram
+              </span>
+              <label className="relative flex h-[22px] w-[38px] cursor-pointer items-center rounded-full bg-slate-200 dark:bg-slate-700 p-0.5 has-[:checked]:bg-primary transition-colors">
+                <input
+                  type="checkbox"
+                  className="invisible absolute peer"
+                  checked={telegramEnabled}
+                  onChange={(e) => setTelegramEnabled(e.target.checked)}
+                />
+                <div className="h-full w-[18px] rounded-full bg-white shadow-md transition-all peer-checked:translate-x-[16px] peer-[:not(:checked)]:translate-x-0"></div>
+              </label>
+            </div>
+          </section>
+
         </div>
-      </div>
+      </main>
 
-      {/* Interactive Map Layer */}
-      <div className="absolute inset-0 z-0">
-        <MapContainer 
-          center={[-9.19, -75.01]} // Center of Peru
-          zoom={6} 
-          scrollWheelZoom={true} 
-          className="w-full h-full"
-          zoomControl={false}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
-          />
-
-          {/* Render Travel Swarms */}
-          {SWARMS.map((swarm) => (
-            <Marker 
-              key={swarm.id} 
-              position={[swarm.lat, swarm.lng]} 
-              icon={createSwarmIcon(swarm)}
-              eventHandlers={{
-                click: () => handleCityClick(swarm),
-              }}
-            />
-          ))}
-
-          {/* Render Agents */}
-          {agents.map((agent) => (
-            <Marker 
-              key={agent.id}
-              position={[agent.lat, agent.lng]}
-              icon={createAgentIcon(agent, interactions[agent.id])}
-              eventHandlers={{
-                click: () => setInteractions((prev) => ({ ...prev, [agent.id]: `${agent.name}: Scanning area...` }))
-              }}
-            />
-          ))}
-        </MapContainer>
-      </div>
-
-      {/* Agent Insight Modal */}
+      {/* Floating Agent Insight Bottom Sheet/Modal */}
       {agentInsight && (
-        <div className="absolute inset-x-0 top-1/3 z-[2000] px-4 pointer-events-auto">
-          <div className="bg-white/95 dark:bg-white/5 backdrop-blur-2xl border border-violet-200 dark:border-violet-800/50 rounded-2xl p-5 shadow-2xl max-w-md mx-auto">
-            <div className="flex items-center justify-between mb-3">
+        <div className="fixed inset-x-0 bottom-6 md:bottom-12 z-[2000] px-4 pointer-events-none">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-2xl max-w-md mx-auto pointer-events-auto">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-lg bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-sm">neurology</span>
+                <div className="size-8 rounded-xl bg-gradient-primary flex items-center justify-center">
+                  <span className="material-symbols-outlined text-white text-base">neurology</span>
                 </div>
                 <div>
-                  <p className="text-slate-900 dark:text-white text-sm font-bold">{agentInsight.city}</p>
-                  <p className="text-violet-500 text-[10px] uppercase font-bold tracking-wider">OpenClaw Insight</p>
+                  <h4 className="text-slate-900 dark:text-white text-sm font-black leading-tight">{agentInsight.city}</h4>
+                  <p className="text-accent text-[9px] uppercase font-bold tracking-wider">Agente Aquisito Intel</p>
                 </div>
               </div>
               <button
                 onClick={() => setAgentInsight(null)}
-                className="size-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                className="size-8 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400 hover:text-slate-900 dark:hover:text-white"
               >
                 <span className="material-symbols-outlined text-sm">close</span>
               </button>
             </div>
+            
             {agentInsight.loading ? (
-              <div className="flex items-center gap-2 text-violet-500">
-                <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>
-                <span className="text-sm">Agent analyzing...</span>
+              <div className="flex items-center gap-2 text-primary py-4 justify-center">
+                <span className="material-symbols-outlined animate-spin text-xl">progress_activity</span>
+                <span className="text-xs font-bold uppercase tracking-wider">Analizando territorio...</span>
               </div>
             ) : (
-              <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{agentInsight.text}</p>
+              <div className="space-y-4">
+                <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed max-h-40 overflow-y-auto whitespace-pre-wrap pr-1">{agentInsight.text}</p>
+                
+                {/* Swipe Match CTA for that city */}
+                <button
+                  onClick={() => navigate('/match', { state: { city: { name: agentInsight.city } } })}
+                  className="w-full py-3 rounded-2xl bg-gradient-primary text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm">local_activity</span>
+                  Buscar Misiones en {agentInsight.city}
+                </button>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Bottom Controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-[1000] pointer-events-none p-4 pb-8 flex flex-col gap-4">
-        <div className="flex justify-end pointer-events-auto">
-          <button
-            onClick={() => navigate('/console')}
-            className="flex items-center justify-center rounded-full h-14 px-6 bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-bold gap-3 shadow-lg shadow-violet-500/30 active:scale-95 transition-transform"
-          >
-            <span className="material-symbols-outlined">terminal</span>
-            <span className="truncate">Agent Console</span>
-          </button>
-        </div>
-
-        <div className="flex flex-col gap-3 pointer-events-auto">
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-background-dark/90 backdrop-blur-xl p-4 shadow-xl">
-            <div className="flex gap-4 items-center">
-              <div className="size-10 flex items-center justify-center rounded-full bg-violet-500/10 text-violet-500">
-                <span className="material-symbols-outlined">hub</span>
-              </div>
-              <div className="flex flex-col">
-                <p className="text-slate-900 dark:text-white text-sm font-bold leading-tight">OpenClaw Gateway</p>
-                <p className="text-slate-500 dark:text-[#9db2b9] text-xs font-normal">
-                  {isGatewayOnline ? 'Agent connected via local gateway' : 'Demo mode — localhost:18789'}
-                </p>
-              </div>
-            </div>
-            <label className="relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full bg-slate-200 dark:bg-[#283539] p-0.5 has-[:checked]:bg-violet-600 transition-colors">
-              <input type="checkbox" className="invisible absolute peer" checked={isConnected} readOnly />
-              <div className="h-full w-[24px] rounded-full bg-white shadow-md transition-all peer-checked:translate-x-5 peer-[:not(:checked)]:translate-x-0"></div>
-            </label>
-          </div>
-
-          <div className="flex items-center justify-between rounded-2xl border border-slate-200 dark:border-white/10 bg-white/95 dark:bg-background-dark/90 backdrop-blur-xl p-4 shadow-xl">
-            <div className="flex gap-4 items-center">
-              <div className="size-10 flex items-center justify-center rounded-full bg-[#0088cc]/10 text-[#0088cc]">
-                <span className="material-symbols-outlined">send</span>
-              </div>
-              <div className="flex flex-col">
-                <p className="text-slate-900 dark:text-white text-sm font-bold leading-tight">Telegram Alerts</p>
-                <p className="text-slate-500 dark:text-[#9db2b9] text-xs font-normal">Forward intel via OpenClaw skill</p>
-              </div>
-            </div>
-            <label className="relative flex h-[28px] w-[48px] cursor-pointer items-center rounded-full bg-slate-200 dark:bg-[#283539] p-0.5 has-[:checked]:bg-[#0088cc] transition-colors">
-              <input
-                type="checkbox"
-                className="invisible absolute peer"
-                checked={telegramEnabled}
-                onChange={(e) => setTelegramEnabled(e.target.checked)}
-              />
-              <div className="h-full w-[24px] rounded-full bg-white shadow-md transition-all translate-x-0 peer-checked:translate-x-5 peer-[:not(:checked)]:translate-x-0"></div>
-            </label>
-          </div>
-        </div>
-      </div>
-
+      {/* Hidden Discover Overlay and Level Up modalls */}
       <HiddenDiscoveryOverlay 
         discovery={activeDiscovery}
         onClose={() => setActiveDiscovery(null)}
@@ -244,6 +263,9 @@ export default function Map() {
         }}
       />
       <LevelUpModal levelData={levelUpData} onClose={() => setLevelUpData(null)} />
+
+      {/* Floating Bottom Nav for Mobile */}
+      <BottomNav />
     </div>
   );
 }

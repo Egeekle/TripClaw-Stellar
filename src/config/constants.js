@@ -1,19 +1,19 @@
 /**
- * TripClaw — Application Constants
+ * Aquisito — Application Constants
  * Production-grade configuration file.
  */
 
 export const APP_CONFIG = {
-  NAME: 'TripClaw',
+  NAME: 'Aquisito',
   VERSION: '1.0.0',
-  DESCRIPTION: 'High-Tech Exploration & AI Travel Intelligence',
-  THEME_COLOR: '#7c3aed',
+  DESCRIPTION: 'Encuentra lo bueno, aquisito nomás. Inteligencia de viaje en enjambre y agentes IA locales.',
+  THEME_COLOR: '#d65335',
 };
 
 export const STORAGE_KEYS = {
-  IDENTITY: 'tripclaw_identity',
+  IDENTITY: 'aquisito_identity',
   AUTH_SESSION: 'supabase.auth.token', // Standard Supabase key
-  THEME: 'tripclaw_theme',
+  THEME: 'aquisito_theme',
 };
 
 export const ROUTES = {
@@ -32,14 +32,15 @@ export const API_ENDPOINTS = {
 };
 
 export const EXPERIENCE_LEVELS = {
-  XP_PER_MISSION: 100,
+  XP_PER_MISSION: 150,
   XP_TO_LEVEL_UP: 1000,
 };
 
 export const BRAND_COLORS = {
-  PRIMARY: '#7c3aed', // Violet-600
-  SECONDARY: '#db2777', // Fuchsia-600
-  ACCENT: '#fbbf24', // Amber-400
-  SUCCESS: '#10b981', // Emerald-500
+  PRIMARY: '#d65335', // Terracota
+  SECONDARY: '#e3a033', // Mostaza
+  ACCENT: '#3ca9be', // Turquesa
+  SUCCESS: '#3fa774', // Verde selva
   ERROR: '#ef4444', // Red-500
 };
+

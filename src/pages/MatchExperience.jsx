@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
+import BottomNav from "../components/BottomNav";
 
 const experiencesByCity = {
   "Cusco": [
@@ -175,6 +177,7 @@ const experiencesByCity = {
 export default function MatchExperience() {
   const navigate = useNavigate();
   const location = useLocation();
+  
   // We extract city name, default to Cusco, but map Lima and Puno keywords if they appear
   const routeCity = location.state?.city?.name || "Cusco Backpackers";
   let cityKey = "Cusco";
@@ -216,19 +219,17 @@ export default function MatchExperience() {
   };
 
   return (
-    <div className="min-h-screen bg-background-light dark:bg-background-dark p-6 flex flex-col font-display text-slate-900 dark:text-white overflow-hidden relative">
+    <div className="min-h-screen pb-24 md:pb-6 bg-background-light dark:bg-background-dark flex flex-col font-display text-slate-900 dark:text-white overflow-hidden relative transition-colors">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 z-10">
-        <button onClick={() => navigate("/map")} className="text-violet-600 dark:text-violet-400 font-bold flex items-center gap-1">
-          <span className="material-symbols-outlined text-sm">arrow_back</span>
-          Mapa
-        </button>
-        <h2 className="text-lg font-bold tracking-tight">Descubrir: {cityKey}</h2>
-        <div className="w-16" />
-      </div>
+      <PageHeader 
+        title={`Descubrir: ${cityKey}`} 
+        subtitle="Misiones"
+        showBack={true}
+        backTo="/map"
+      />
 
       {/* Card Container */}
-      <div className="flex-1 flex items-center justify-center max-w-md mx-auto w-full relative">
+      <div className="flex-1 flex items-center justify-center max-w-md mx-auto w-full relative px-6 py-4">
         <div 
           className={`w-full transition-all duration-300 transform ${
             direction === "left" ? "-translate-x-full -rotate-12 opacity-0" : 
@@ -236,48 +237,48 @@ export default function MatchExperience() {
             "translate-x-0 rotate-0 opacity-100"
           }`}
         >
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl overflow-hidden shadow-2xl">
+          <div className="bg-white dark:bg-[#2b2724] border border-slate-200 dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-xl">
             {/* Image */}
-            <div className="relative h-80 bg-slate-200 dark:bg-slate-900">
+            <div className="relative h-72 sm:h-80 bg-slate-200 dark:bg-slate-900">
               <img
                 src={currentExperience.image}
                 alt={currentExperience.title}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-slate-900 dark:text-white px-3 py-1.5 rounded-full flex items-center gap-1 shadow-lg">
-                <span className="font-bold">{currentExperience.price} XLM</span>
+              <div className="absolute top-4 right-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm text-slate-900 dark:text-white px-4 py-2 rounded-full flex items-center gap-1 shadow-lg border border-slate-100 dark:border-slate-800">
+                <span className="font-black text-primary">{currentExperience.price} XLM</span>
               </div>
             </div>
 
             {/* Content */}
             <div className="p-6">
-              <h3 className="text-2xl font-bold mb-2 tracking-tight">{currentExperience.title}</h3>
+              <h3 className="text-xl sm:text-2xl font-black mb-2 tracking-tight leading-tight">{currentExperience.title}</h3>
 
-              <div className="flex items-center gap-2 mb-4 text-sm">
+              <div className="flex items-center gap-2 mb-4 text-xs font-bold">
                 <div className="flex items-center gap-1">
-                  <span className="material-symbols-outlined text-amber-500 text-sm">star</span>
-                  <span className="font-bold">{currentExperience.rating}</span>
-                  <span className="text-slate-500 dark:text-slate-400">
+                  <span className="material-symbols-outlined text-secondary text-sm">star</span>
+                  <span className="text-slate-800 dark:text-white">{currentExperience.rating}</span>
+                  <span className="text-slate-400 font-medium">
                     ({currentExperience.reviews})
                   </span>
                 </div>
-                <span className="text-slate-500">•</span>
-                <span className="text-slate-500 font-medium">
+                <span className="text-slate-300 dark:text-slate-800">•</span>
+                <span className="text-primary uppercase tracking-wider">
                   {currentExperience.guide}
                 </span>
               </div>
 
-              <p className="text-slate-600 dark:text-slate-300 mb-6 leading-relaxed">
+              <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mb-6 leading-relaxed">
                 {currentExperience.description}
               </p>
 
-              <div className="flex gap-4 mb-2">
-                <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <span className="material-symbols-outlined text-sm">schedule</span>
+              <div className="flex gap-3">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800">
+                  <span className="material-symbols-outlined text-sm text-accent">schedule</span>
                   <span>{currentExperience.duration}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <span className="material-symbols-outlined text-sm">group</span>
+                <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 px-3 py-1.5 rounded-xl border border-slate-200/50 dark:border-slate-800">
+                  <span className="material-symbols-outlined text-sm text-accent">group</span>
                   <span>{currentExperience.groupSize}</span>
                 </div>
               </div>
@@ -287,25 +288,28 @@ export default function MatchExperience() {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-6 justify-center mt-6 max-w-md mx-auto w-full pb-8 z-10">
+      <div className="flex gap-6 justify-center max-w-md mx-auto w-full pb-8 z-10">
         <button
           onClick={() => handleSwipe(false)}
-          className="w-16 h-16 rounded-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg"
+          className="w-16 h-16 rounded-full bg-white dark:bg-[#2b2724] border border-slate-200 dark:border-slate-850 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg text-slate-400 hover:text-red-500"
         >
-          <span className="material-symbols-outlined text-3xl text-red-500">close</span>
+          <span className="material-symbols-outlined text-3xl">close</span>
         </button>
         <button
           onClick={() => handleSwipe(true)}
-          className="w-20 h-20 rounded-full bg-gradient-to-tr from-violet-600 to-fuchsia-600 flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-[0_0_30px_rgba(139,92,246,0.4)]"
+          className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center hover:scale-110 active:scale-95 transition-transform shadow-lg shadow-primary/30 text-white"
         >
-          <span className="material-symbols-outlined text-4xl text-white">favorite</span>
+          <span className="material-symbols-outlined text-3xl">favorite</span>
         </button>
       </div>
 
       {/* Counter */}
-      <div className="text-center mt-auto text-sm font-bold text-slate-400 tracking-widest z-10">
-        {currentIndex + 1} / {currentCityExperiences.length}
+      <div className="text-center pb-2 text-[10px] font-bold text-slate-400 tracking-widest z-10 uppercase">
+        Misión {currentIndex + 1} de {currentCityExperiences.length}
       </div>
+
+      {/* Bottom Nav */}
+      <BottomNav />
     </div>
   );
 }

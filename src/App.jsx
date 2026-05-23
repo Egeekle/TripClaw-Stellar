@@ -40,7 +40,7 @@ class ErrorBoundary extends Component {
             </p>
             <button
               onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/'; }}
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-bold shadow-lg shadow-violet-500/20"
+              className="px-6 py-3 rounded-xl bg-gradient-primary text-white font-bold shadow-lg shadow-primary/20"
             >
               Return Home
             </button>
@@ -57,7 +57,7 @@ function LoadingFallback() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
       <div className="flex flex-col items-center gap-4">
-        <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-fuchsia-500 flex items-center justify-center shadow-lg animate-pulse">
+        <div className="size-12 rounded-xl bg-gradient-primary flex items-center justify-center shadow-lg animate-pulse">
           <span className="material-symbols-outlined text-white text-2xl">neurology</span>
         </div>
         <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Loading…</p>
@@ -71,16 +71,17 @@ function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark p-6">
       <div className="text-center max-w-md">
-        <div className="text-7xl font-bold bg-gradient-to-r from-violet-600 to-fuchsia-500 bg-clip-text text-transparent mb-4">404</div>
+        <div className="text-7xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">404</div>
         <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Page not found</h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">The page you're looking for doesn't exist.</p>
-        <a href="/" className="inline-block px-6 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-500 text-white font-bold shadow-lg shadow-violet-500/20">
+        <a href="/" className="inline-block px-6 py-3 rounded-xl bg-gradient-primary text-white font-bold shadow-lg shadow-primary/20">
           Go Home
         </a>
       </div>
     </div>
   );
 }
+
 
 // ── Animated Routes Wrapper ─────────────────────────────────
 function AnimatedRoutes() {
