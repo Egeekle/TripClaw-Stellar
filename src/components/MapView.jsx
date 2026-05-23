@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 
 // Bounding box of Peru for Lat/Lng to X/Y mapping
@@ -9,7 +9,29 @@ const MAP_BOUNDS = {
   rightLng: -68.0,
 };
 
-export default function MapView({ 
+/**
+ * ⚡ Bolt: Move helper logic and static coordinates outside component
+ * to avoid unnecessary recalculations on each render.
+ */
+const getRelativeCoords = (lat, lng) => {
+  const totalLng = MAP_BOUNDS.rightLng - MAP_BOUNDS.leftLng;
+  const totalLat = MAP_BOUNDS.topLat - MAP_BOUNDS.bottomLat;
+
+  const x = ((lng - MAP_BOUNDS.leftLng) / totalLng) * 100;
+  const y = ((MAP_BOUNDS.topLat - lat) / totalLat) * 100;
+
+  return { x: `${x}%`, y: `${y}%`, xVal: x, yVal: y };
+};
+
+// Static visited path between Lima and Cusco
+const LIMA_COORDS = getRelativeCoords(-12.1211, -77.0294);
+const CUSCO_COORDS = getRelativeCoords(-13.1631, -72.5450);
+
+/**
+ * ⚡ Bolt: Wrap MapView in React.memo to prevent re-renders when parent state
+ * (like agentInsight) changes but MapView props remain stable.
+ */
+const MapView = memo(function MapView({
   swarms, 
   agents, 
   selectedCity, 
@@ -19,26 +41,11 @@ export default function MapView({
   const [zoom, setZoom] = useState(1.1);
   const [activeTooltip, setActiveTooltip] = useState(null);
 
-  // Helper to convert geographical coordinates to percentage positions
-  const getRelativeCoords = (lat, lng) => {
-    const totalLng = MAP_BOUNDS.rightLng - MAP_BOUNDS.leftLng;
-    const totalLat = MAP_BOUNDS.topLat - MAP_BOUNDS.bottomLat;
-    
-    const x = ((lng - MAP_BOUNDS.leftLng) / totalLng) * 100;
-    const y = ((MAP_BOUNDS.topLat - lat) / totalLat) * 100;
-    
-    return { x: `${x}%`, y: `${y}%`, xVal: x, yVal: y };
-  };
-
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.3, 3));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.3, 1));
   const handleReset = () => {
     setZoom(1.1);
   };
-
-  // Visited path between Lima and Cusco
-  const limaCoords = getRelativeCoords(-12.1211, -77.0294);
-  const cuscoCoords = getRelativeCoords(-13.1631, -72.5450);
 
   return (
     <div className="relative w-full h-full bg-[#f1ece1] dark:bg-[#201d1b] border-2 border-[#d5cfc1] dark:border-[#38332f] rounded-3xl overflow-hidden shadow-inner select-none transition-colors">
@@ -92,7 +99,7 @@ export default function MapView({
 
             {/* Dotted path (Lima to Cusco) */}
             <motion.path 
-              d={`M ${limaCoords.xVal} ${limaCoords.yVal} Q ${(limaCoords.xVal + cuscoCoords.xVal)/2 + 3} ${(limaCoords.yVal + cuscoCoords.yVal)/2 - 5}, ${cuscoCoords.xVal} ${cuscoCoords.yVal}`}
+              d={`M ${LIMA_COORDS.xVal} ${LIMA_COORDS.yVal} Q ${(LIMA_COORDS.xVal + CUSCO_COORDS.xVal)/2 + 3} ${(LIMA_COORDS.yVal + CUSCO_COORDS.yVal)/2 - 5}, ${CUSCO_COORDS.xVal} ${CUSCO_COORDS.yVal}`}
               fill="none" 
               stroke="url(#routeGradient)" 
               strokeWidth="0.8" 
@@ -277,3 +284,6 @@ export default function MapView({
     </div>
   );
 }
+);
+
+export default MapView;
