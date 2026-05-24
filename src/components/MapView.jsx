@@ -28,18 +28,84 @@ const LIMA_COORDS = getRelativeCoords(-12.1211, -77.0294);
 const CUSCO_COORDS = getRelativeCoords(-13.1631, -72.5450);
 
 /**
+ * ⚡ Bolt: Extract and memoize markers to prevent unnecessary re-renders
+ * of static elements when agents move.
+ */
+const SwarmMarker = memo(({ swarm, isSelected, onClick }) => {
+  const coords = getRelativeCoords(swarm.lat, swarm.lng);
+  return (
+    <div
+      style={{ left: coords.x, top: coords.y }}
+      className="absolute -translate-x-1/2 -translate-y-[85%] z-20 cursor-pointer"
+      onClick={() => onClick(swarm)}
+    >
+      {isSelected && (
+        <span className="absolute -left-3 -top-2 inline-flex h-12 w-12 rounded-full bg-primary/20 animate-ping pointer-events-none"></span>
+      )}
+      <div className={`flex flex-col items-center transition-all ${isSelected ? 'scale-125' : 'hover:scale-110'}`}>
+        <div className={`p-1.5 rounded-full flex items-center justify-center shadow-lg border-2 ${
+          isSelected
+            ? 'bg-primary border-secondary text-white'
+            : 'bg-white dark:bg-[#2b2724] border-primary text-primary'
+        }`}>
+          <span className="material-symbols-outlined text-[16px] font-bold">
+            {swarm.icon || 'location_on'}
+          </span>
+        </div>
+        <div className="w-1.5 h-1.5 bg-foreground-light/60 dark:bg-foreground-dark/40 rounded-full mt-0.5 blur-[1px]"></div>
+      </div>
+    </div>
+  );
+});
+
+const AgentMarker = memo(({ agent, interaction, onClick }) => {
+  const coords = getRelativeCoords(agent.lat, agent.lng);
+  return (
+    <div
+      style={{ left: coords.x, top: coords.y }}
+      className="absolute -translate-x-1/2 -translate-y-1/2 z-20 group cursor-pointer"
+      onClick={() => onClick({
+        type: 'agent',
+        name: agent.name,
+        sentiment: agent.sentiment,
+        desc: 'Agente enjambre buscando oportunidades locales.'
+      })}
+    >
+      {interaction && (
+        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-white dark:bg-[#2b2724] text-slate-800 dark:text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg border border-primary/20 whitespace-nowrap z-30 animate-bounce">
+          {interaction}
+          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white dark:bg-[#2b2724] rotate-45 border-b border-r border-primary/20"></div>
+        </div>
+      )}
+      <div className="size-6 bg-[#2b2724] border border-accent rounded-lg flex items-center justify-center shadow-md transform hover:scale-110 transition-transform">
+        <span className="material-symbols-outlined text-accent text-[12px]">smart_toy</span>
+      </div>
+      <div className="absolute top-full left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-900 text-white text-[8px] font-bold px-1 py-0.5 rounded whitespace-nowrap z-50">
+        {agent.name}
+      </div>
+    </div>
+  );
+});
+
+/**
  * ⚡ Bolt: Wrap MapView in React.memo to prevent re-renders when parent state
  * (like agentInsight) changes but MapView props remain stable.
  */
 const MapView = memo(function MapView({
   swarms, 
   agents, 
+  interactions = {},
   selectedCity, 
   onCityClick, 
   userLocation = { lat: -12.1211, lng: -77.0294, name: 'Tú (Lima)' } // Default location is Lima
 }) {
   const [zoom, setZoom] = useState(1.1);
   const [activeTooltip, setActiveTooltip] = useState(null);
+
+  // ⚡ Bolt: Memoize user coordinates to avoid recalculating on each render
+  const userCoords = React.useMemo(() =>
+    userLocation ? getRelativeCoords(userLocation.lat, userLocation.lng) : null
+  , [userLocation?.lat, userLocation?.lng]);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.3, 3));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.3, 1));
@@ -119,12 +185,9 @@ const MapView = memo(function MapView({
           </svg>
 
           {/* User Location Indicator */}
-          {userLocation && (
+          {userCoords && (
             <div 
-              style={{ 
-                left: getRelativeCoords(userLocation.lat, userLocation.lng).x, 
-                top: getRelativeCoords(userLocation.lat, userLocation.lng).y 
-              }}
+              style={{ left: userCoords.x, top: userCoords.y }}
               className="absolute -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center group cursor-pointer"
               onClick={() => setActiveTooltip({
                 type: 'user',
@@ -140,67 +203,27 @@ const MapView = memo(function MapView({
           )}
 
           {/* Render Travel Swarms (Cities) */}
-          {swarms.map((swarm) => {
-            const coords = getRelativeCoords(swarm.lat, swarm.lng);
-            const isSelected = selectedCity && selectedCity.id === swarm.id;
-
-            return (
-              <div 
-                key={swarm.id}
-                style={{ left: coords.x, top: coords.y }}
-                className="absolute -translate-x-1/2 -translate-y-[85%] z-20 cursor-pointer"
-                onClick={() => {
-                  onCityClick(swarm);
-                  setActiveTooltip(swarm);
-                }}
-              >
-                {/* Active Pin Pulse Effect */}
-                {isSelected && (
-                  <span className="absolute -left-3 -top-2 inline-flex h-12 w-12 rounded-full bg-primary/20 animate-ping pointer-events-none"></span>
-                )}
-
-                {/* Styled Pin Marker */}
-                <div className={`flex flex-col items-center transition-all ${isSelected ? 'scale-125' : 'hover:scale-110'}`}>
-                  <div className={`p-1.5 rounded-full flex items-center justify-center shadow-lg border-2 ${
-                    isSelected 
-                      ? 'bg-primary border-secondary text-white' 
-                      : 'bg-white dark:bg-[#2b2724] border-primary text-primary'
-                  }`}>
-                    <span className="material-symbols-outlined text-[16px] font-bold">
-                      {swarm.icon || 'location_on'}
-                    </span>
-                  </div>
-                  {/* Pin drop point shadow indicator */}
-                  <div className="w-1.5 h-1.5 bg-foreground-light/60 dark:bg-foreground-dark/40 rounded-full mt-0.5 blur-[1px]"></div>
-                </div>
-              </div>
-            );
-          })}
+          {swarms.map((swarm) => (
+            <SwarmMarker
+              key={swarm.id}
+              swarm={swarm}
+              isSelected={selectedCity?.id === swarm.id}
+              onClick={(s) => {
+                onCityClick(s);
+                setActiveTooltip(s);
+              }}
+            />
+          ))}
 
           {/* Render Scout Agents */}
-          {agents.map((agent) => {
-            const coords = getRelativeCoords(agent.lat, agent.lng);
-            return (
-              <div
-                key={agent.id}
-                style={{ left: coords.x, top: coords.y }}
-                className="absolute -translate-x-1/2 -translate-y-1/2 z-20 group cursor-pointer"
-                onClick={() => setActiveTooltip({
-                  type: 'agent',
-                  name: agent.name,
-                  sentiment: agent.sentiment,
-                  desc: 'Agente enjambre buscando oportunidades locales.'
-                })}
-              >
-                <div className="size-6 bg-[#2b2724] border border-accent rounded-lg flex items-center justify-center shadow-md transform hover:scale-110 transition-transform">
-                  <span className="material-symbols-outlined text-accent text-[12px]">smart_toy</span>
-                </div>
-                <div className="absolute top-full left-1/2 -translate-x-1/2 hidden group-hover:block bg-slate-900 text-white text-[8px] font-bold px-1 py-0.5 rounded whitespace-nowrap z-50">
-                  {agent.name}
-                </div>
-              </div>
-            );
-          })}
+          {agents.map((agent) => (
+            <AgentMarker
+              key={agent.id}
+              agent={agent}
+              interaction={interactions[agent.id]}
+              onClick={setActiveTooltip}
+            />
+          ))}
         </motion.div>
       </div>
 
