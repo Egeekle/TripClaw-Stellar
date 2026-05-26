@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { useAuth } from '../hooks/useAuth';
@@ -10,35 +10,8 @@ import BottomNav from '../components/BottomNav';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { status, wsStatus, agentEvents, isGatewayOnline } = useOpenClaw();
+  const { status, agentEvents, isGatewayOnline } = useOpenClaw();
   const { user: identity } = useAuth();
-
-  // Simulated live feed when gateway is offline (demo mode)
-  const [demoEvents, setDemoEvents] = useState([]);
-
-  useEffect(() => {
-    if (isGatewayOnline && agentEvents.length > 0) return;
-
-    const intents = [
-      { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
-      { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
-      { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
-      { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
-      { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
-    ];
-
-    const interval = setInterval(() => {
-      const randomIntent = intents[Math.floor(Math.random() * intents.length)];
-      setDemoEvents((prev) => [
-        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
-        ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
-      ]);
-    }, 3500);
-
-    return () => clearInterval(interval);
-  }, [isGatewayOnline, agentEvents]);
-
-  const activeEvents = isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents;
 
   return (
     <div className="min-h-screen pb-24 md:pb-6 bg-background-light dark:bg-background-dark font-display transition-colors">
@@ -140,7 +113,10 @@ export default function Dashboard() {
             </section>
 
             {/* Live activity feed from swarms */}
-            <LiveFeed events={activeEvents} />
+            <LiveFeed
+              events={agentEvents}
+              isGatewayOnline={isGatewayOnline}
+            />
           </div>
 
         </div>
