@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+/**
+ * ⚡ Bolt: Wrapped BottomNav in React.memo. This component relies on location.pathname
+ * which is provided by the useLocation hook, but it's good practice to shield it from
+ * unrelated parent re-renders in the Dashboard.
+ */
+const BottomNav = memo(function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +52,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;
