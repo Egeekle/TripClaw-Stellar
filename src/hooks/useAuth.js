@@ -39,27 +39,38 @@ export function useAuth() {
 
   useEffect(() => {
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        syncProfile(session.user);
-      } else {
-        const local = getLocalProfile();
-        if (local) setUser(local);
-        setLoading(false);
-      }
-    });
+    if (!supabase) {
+      // Fallback mode: load from localStorage
+      const local = getLocalProfile();
+      if (local) setUser(local);
+      setLoading(false);
+    } else {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        if (session?.user) {
+          syncProfile(session.user);
+        } else {
+          const local = getLocalProfile();
+          if (local) setUser(local);
+          setLoading(false);
+        }
+      });
+    }
 
     // 2. Listen for auth changes
-    const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        syncProfile(session.user);
-      } else {
-        setUser(null);
-        setLoading(false);
-      }
-    }) || { data: { subscription: null } };
+    let subscription = null;
+    if (supabase) {
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+        if (session?.user) {
+          syncProfile(session.user);
+        } else {
+          setUser(null);
+          setLoading(false);
+        }
+      });
+      subscription = data?.subscription;
+    }
 
     return () => subscription?.unsubscribe();
   }, []);
@@ -116,7 +127,7 @@ export function useAuth() {
     loading,
     updateProfile,
     signOut,
-    isAuthenticated: !!session?.user
+    isAuthenticated: !!session?.user || (!supabase && !!user)
   };
 
 }

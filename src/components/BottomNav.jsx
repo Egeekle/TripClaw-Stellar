@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+/**
+ * ⚡ Bolt: Wrap BottomNav in React.memo to prevent unnecessary
+ * re-renders when parent state updates but props are stable.
+ */
+const BottomNav = memo(function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +51,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;
