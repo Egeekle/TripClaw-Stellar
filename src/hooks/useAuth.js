@@ -38,8 +38,20 @@ export function useAuth() {
   };
 
   useEffect(() => {
+    // Handle local-only mode when Supabase is not configured
+    if (!supabase) {
+      const local = getLocalProfile();
+      if (local) {
+        setUser(local);
+        // Mock a session for local-only mode to bypass RequireAuth
+        setSession({ user: { email: local.email || 'demo@aquisito.local', user_metadata: local } });
+      }
+      setLoading(false);
+      return;
+    }
+
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -51,7 +63,7 @@ export function useAuth() {
     });
 
     // 2. Listen for auth changes
-    const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -59,7 +71,7 @@ export function useAuth() {
         setUser(null);
         setLoading(false);
       }
-    }) || { data: { subscription: null } };
+    });
 
     return () => subscription?.unsubscribe();
   }, []);

@@ -1,6 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function LiveFeed({ events }) {
+const DEMO_INTENTS = [
+  { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
+  { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
+  { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
+  { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
+  { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
+];
+
+export default function LiveFeed({ realEvents = [], isGatewayOnline = false }) {
+  // Simulated live feed when gateway is offline (demo mode)
+  // Pushing this state down here prevents the entire Dashboard from re-rendering
+  // every 3.5 seconds during demo mode.
+  const [demoEvents, setDemoEvents] = useState([]);
+
+  useEffect(() => {
+    if (isGatewayOnline && realEvents.length > 0) return;
+
+    const interval = setInterval(() => {
+      const randomIntent = DEMO_INTENTS[Math.floor(Math.random() * DEMO_INTENTS.length)];
+      setDemoEvents((prev) => [
+        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
+        ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
+      ]);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isGatewayOnline, realEvents]);
+
+  const activeEvents = isGatewayOnline && realEvents.length > 0 ? realEvents : demoEvents;
+
   return (
     <section className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
@@ -14,13 +43,13 @@ export default function LiveFeed({ events }) {
       </div>
 
       <div className="space-y-3">
-        {events.length === 0 ? (
+        {activeEvents.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">stream</span>
             <p className="text-sm text-slate-400 font-medium">Esperando datos de intención del enjambre...</p>
           </div>
         ) : (
-          events.map((event) => (
+          activeEvents.map((event) => (
             <div 
               key={event.id} 
               className="group p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex items-start gap-4 animate-in slide-in-from-bottom-2 duration-300"
