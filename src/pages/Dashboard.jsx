@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { useAuth } from '../hooks/useAuth';
@@ -7,6 +7,18 @@ import LiveFeed from '../components/dashboard/LiveFeed';
 import { Card, Badge } from '../components/ui';
 import PageHeader from '../components/PageHeader';
 import BottomNav from '../components/BottomNav';
+
+/**
+ * PERFORMANCE: Moving static data outside the component prevents redundant
+ * object allocation and reference changes on every render cycle.
+ */
+const DEMO_INTENTS = [
+  { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
+  { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
+  { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
+  { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
+  { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
+];
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -19,16 +31,8 @@ export default function Dashboard() {
   useEffect(() => {
     if (isGatewayOnline && agentEvents.length > 0) return;
 
-    const intents = [
-      { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
-      { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
-      { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
-      { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
-      { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
-    ];
-
     const interval = setInterval(() => {
-      const randomIntent = intents[Math.floor(Math.random() * intents.length)];
+      const randomIntent = DEMO_INTENTS[Math.floor(Math.random() * DEMO_INTENTS.length)];
       setDemoEvents((prev) => [
         { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
         ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
@@ -38,7 +42,14 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isGatewayOnline, agentEvents]);
 
-  const activeEvents = isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents;
+  /**
+   * PERFORMANCE: Memoizing activeEvents prevents downstream components (like LiveFeed)
+   * from re-rendering if the underlying event data hasn't changed, even when
+   * other Dashboard state updates.
+   */
+  const activeEvents = useMemo(() =>
+    isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents
+  , [isGatewayOnline, agentEvents, demoEvents]);
 
   return (
     <div className="min-h-screen pb-24 md:pb-6 bg-background-light dark:bg-background-dark font-display transition-colors">

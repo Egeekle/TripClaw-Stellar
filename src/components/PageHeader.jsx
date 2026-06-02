@@ -1,11 +1,15 @@
-import React from 'react';
+/**
+ * PERFORMANCE: React.memo shields the heavy PageHeader (with multiple nav links)
+ * from parent state updates (like Dashboard's live feed) that don't affect header props.
+ */
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+const PageHeader = memo(function PageHeader({
   title, 
   subtitle, 
   showBack = false, 
@@ -114,4 +118,6 @@ export default function PageHeader({
       </div>
     </header>
   );
-}
+});
+
+export default PageHeader;
