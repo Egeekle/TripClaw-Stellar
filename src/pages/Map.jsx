@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { sendTelegramViaAgent } from '../services/openclawApi';
@@ -12,6 +12,8 @@ import PageHeader from '../components/PageHeader';
 import BottomNav from '../components/BottomNav';
 import { Card, Badge } from '../components/ui';
 
+const CATEGORIES = ['Todos', 'Aventura', 'Gastronomía', 'Cultura', 'Naturaleza'];
+
 export default function Map() {
   const navigate = useNavigate();
   const { wsStatus, isConnected, isGatewayOnline, runSkill } = useOpenClaw();
@@ -23,8 +25,11 @@ export default function Map() {
   const [levelUpData, setLevelUpData] = useState(null);
   const [activeFilter, setActiveFilter] = useState('Todos');
 
-  // Handle city click — invoke trip_analyzer skill explicitly
-  const handleCityClick = async (city) => {
+  /**
+   * ⚡ Bolt: Memoize city click handler to prevent stable reference changes
+   * from triggering unnecessary MapView re-renders.
+   */
+  const handleCityClick = useCallback(async (city) => {
     setSelectedCity(city);
     setAgentInsight({ loading: true, city: city.name });
 
@@ -50,20 +55,23 @@ export default function Map() {
     if (telegramEnabled) {
       sendTelegramViaAgent(`📍 *Aquisito Explorer*\nUsuario exploró *${city.name}* a través del mapa de agentes.`);
     }
-  };
+  }, [runSkill, telegramEnabled]);
 
-  // Filter swarms based on selected filter category
-  const filteredSwarms = activeFilter === 'Todos' 
-    ? SWARMS 
-    : SWARMS.filter(swarm => {
-        if (activeFilter === 'Aventura') return swarm.type === 'Adventure';
-        if (activeFilter === 'Gastronomía') return swarm.type === 'Gastronomy';
-        if (activeFilter === 'Cultura') return swarm.type === 'Culture' || swarm.type === 'History';
-        if (activeFilter === 'Naturaleza') return swarm.type === 'Nature' || swarm.type === 'Wilderness';
-        return true;
-      });
-
-  const categories = ['Todos', 'Aventura', 'Gastronomía', 'Cultura', 'Naturaleza'];
+  /**
+   * ⚡ Bolt: Memoize filtered swarms to avoid re-calculating on every render
+   * unless the filter category actually changes.
+   */
+  const filteredSwarms = useMemo(() => {
+    return activeFilter === 'Todos'
+      ? SWARMS
+      : SWARMS.filter(swarm => {
+          if (activeFilter === 'Aventura') return swarm.type === 'Adventure';
+          if (activeFilter === 'Gastronomía') return swarm.type === 'Gastronomy';
+          if (activeFilter === 'Cultura') return swarm.type === 'Culture' || swarm.type === 'History';
+          if (activeFilter === 'Naturaleza') return swarm.type === 'Nature' || swarm.type === 'Wilderness';
+          return true;
+        });
+  }, [activeFilter]);
 
   return (
     <div className="relative min-h-screen flex flex-col font-display text-slate-900 dark:text-white bg-background-light dark:bg-background-dark pb-24 md:pb-6 transition-colors">
@@ -83,7 +91,7 @@ export default function Map() {
           
           {/* Category Filters row above map */}
           <div className="flex gap-2 overflow-x-auto pb-1 shrink-0 scrollbar-none">
-            {categories.map((cat) => (
+            {CATEGORIES.map((cat) => (
               <button
                 key={cat}
                 onClick={() => setActiveFilter(cat)}
