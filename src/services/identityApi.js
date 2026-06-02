@@ -6,6 +6,7 @@
 import { supabase } from '../lib/supabase';
 import { STORAGE_KEYS } from '../config/constants';
 import { logger } from './logger';
+import { sendTelegramViaAgent } from './openclawApi';
 
 const LOCAL_KEY = STORAGE_KEYS.IDENTITY;
 
@@ -309,6 +310,10 @@ export async function syncMissionAndProgression(userId, cityName, missionTitle) 
         const firstStepsBadge = badges.find(b => b.name === 'First Steps');
         if (firstStepsBadge) {
           await grantBadge(userId, firstStepsBadge.id);
+          sendTelegramViaAgent(
+            `💎 *New Artifact Acquired!*\n\n` +
+            `You just minted the *'First Steps'* badge on the Stellar network. View it in your Passport!`
+          );
         }
       }
 
@@ -317,6 +322,10 @@ export async function syncMissionAndProgression(userId, cityName, missionTitle) 
         const alreadyHasCityBadge = userBadges.some(ub => ub.badges?.name === badgeName);
         if (cityBadge && !alreadyHasCityBadge) {
           await grantBadge(userId, cityBadge.id);
+          sendTelegramViaAgent(
+            `💎 *New Artifact Acquired!*\n\n` +
+            `You just minted the *'${badgeName}'* badge on the Stellar network. View it in your Passport!`
+          );
         }
       }
 
@@ -325,6 +334,10 @@ export async function syncMissionAndProgression(userId, cityName, missionTitle) 
         const alreadyHasDiscoverer = userBadges.some(ub => ub.badges?.name === 'City Discoverer');
         if (discovererBadge && !alreadyHasDiscoverer) {
           await grantBadge(userId, discovererBadge.id);
+          sendTelegramViaAgent(
+            `💎 *New Artifact Acquired!*\n\n` +
+            `You just minted the *'City Discoverer'* badge on the Stellar network. View it in your Passport!`
+          );
         }
       }
     }

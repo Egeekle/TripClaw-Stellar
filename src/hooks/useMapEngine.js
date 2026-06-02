@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { DEMO_AGENTS, AGENT_DIALOGUES } from '../config/mapData';
 import { discoveryEngine } from '../services/discoveryService';
 import { STORAGE_KEYS } from '../config/constants';
+import { sendTelegramViaAgent } from '../services/openclawApi';
 
 export function useMapEngine() {
   const [agents, setAgents] = useState(DEMO_AGENTS);
@@ -58,6 +59,14 @@ export function useMapEngine() {
       const discovery = await discoveryEngine.evaluateLocation(null, profile, mockEnv);
       if (discovery) {
         setActiveDiscovery(discovery);
+        
+        // Alert Telegram
+        sendTelegramViaAgent(
+          `🛰️ *[Hidden Discovery Detected]*\n\n` +
+          `*${discovery.title}* (${discovery.rarity})\n` +
+          `"${discovery.description}"\n\n` +
+          `Accept this discovery on your map to claim +${discovery.xpReward} XP!`
+        );
       }
     };
 

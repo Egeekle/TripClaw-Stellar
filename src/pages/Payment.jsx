@@ -4,6 +4,7 @@ import { useStellarWallet } from '../hooks/useStellarWallet';
 import { useAuth } from '../hooks/useAuth';
 import { xpService } from '../services/xpService';
 import { syncMissionAndProgression } from '../services/identityApi';
+import { sendTelegramViaAgent } from '../services/openclawApi';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import PageHeader from '../components/PageHeader';
 import BottomNav from '../components/BottomNav';
@@ -62,6 +63,14 @@ export default function Payment() {
 
       const txXdr = tx.toXDR();
 
+      sendTelegramViaAgent(
+        `🔒 *Funds locked in Escrow!*\n\n` +
+        `*Amount:* ${swarm.price} XLM\n` +
+        `*Mission:* ${swarm.name}\n` +
+        `*Guide:* ${swarm.guide || 'Guía Aquisito'}\n\n` +
+        `The funds will be released to the guide upon your physical check-in.`
+      );
+
       setStep('signing');
       const signedXdr = await sign(txXdr);
 
@@ -72,10 +81,23 @@ export default function Payment() {
       setTxHash(response.hash);
       setStep('success');
 
+      // Send funds released message
+      const shortHash = response.hash ? `${response.hash.slice(0, 10)}...${response.hash.slice(-10)}` : 'N/A';
+      sendTelegramViaAgent(
+        `✅ *Check-In Verified & Funds Released!*\n\n` +
+        `*Amount:* ${swarm.price} XLM released to *${swarm.guide || 'Guía Aquisito'}*\n` +
+        `*Tx Hash:* \`${shortHash}\`\n\n` +
+        `You gained *+150 XP*! 🏔️`
+      );
+
       // Grant XP for payment
       const xpResult = xpService.grantXp('mission_complete');
       if (xpResult && xpResult.leveledUp) {
         setLevelUpData(xpResult);
+        sendTelegramViaAgent(
+          `🎉 *LEVEL UP!* \n\n` +
+          `You've reached *Level ${xpResult.newLevel}: [${xpResult.rank.name}]*! Keep exploring to unlock new territories.`
+        );
       }
 
       // Sync mission completion and city progress to Supabase
