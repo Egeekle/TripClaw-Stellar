@@ -203,7 +203,8 @@ export default function MatchExperience() {
           name: currentExperience.title,
           type: "Adventure",
           guide: currentExperience.guide,
-          price: currentExperience.price
+          price: currentExperience.price,
+          city: cityKey
         }} });
       }, 500);
     } else {

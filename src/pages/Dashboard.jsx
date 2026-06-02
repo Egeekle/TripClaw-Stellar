@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useOpenClaw } from '../context/OpenClawContext';
 import { useAuth } from '../hooks/useAuth';
+import { fetchCompletedMissionsCount } from '../services/identityApi';
 import AgentHero from '../components/dashboard/AgentHero';
 import LiveFeed from '../components/dashboard/LiveFeed';
 import { Card, Badge } from '../components/ui';
@@ -12,6 +13,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { status, wsStatus, agentEvents, isGatewayOnline } = useOpenClaw();
   const { user: identity } = useAuth();
+  const [completedMissionsCount, setCompletedMissionsCount] = useState(0);
+
+  useEffect(() => {
+    if (identity && identity.id) {
+      fetchCompletedMissionsCount(identity.id).then(count => {
+        setCompletedMissionsCount(count);
+      });
+    }
+  }, [identity]);
 
   // Simulated live feed when gateway is offline (demo mode)
   const [demoEvents, setDemoEvents] = useState([]);
@@ -72,7 +82,7 @@ export default function Dashboard() {
               <Card hoverable className="flex flex-col gap-1 border-slate-200 dark:border-slate-800 bg-white dark:bg-white/5">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Misiones Cumplidas</p>
                 <div className="flex items-center gap-1.5">
-                  <p className="text-xl font-black text-slate-800 dark:text-white leading-none">3</p>
+                  <p className="text-xl font-black text-slate-800 dark:text-white leading-none">{completedMissionsCount}</p>
                   <span className="material-symbols-outlined text-primary text-sm leading-none">military_tech</span>
                 </div>
               </Card>

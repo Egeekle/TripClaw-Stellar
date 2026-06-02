@@ -228,3 +228,108 @@ export async function fetchUserBadges(userId) {
   }
   return data;
 }
+
+/**
+ * Fetch all available badges in the system.
+ */
+export async function fetchAllBadges() {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('badges')
+    .select('*')
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.warn('[IdentityAPI] Fetch all badges failed:', error.message);
+    return [];
+  }
+  return data;
+}
+
+/**
+ * Fetch completed missions count for a user.
+ */
+export async function fetchCompletedMissionsCount(userId) {
+  if (!supabase) return 0;
+
+  const { count, error } = await supabase
+    .from('user_missions')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('status', 'completed');
+
+  if (error) {
+    console.warn('[IdentityAPI] Fetch missions count failed:', error.message);
+    return 0;
+  }
+  return count || 0;
+}
+
+/**
+ * Sync completed mission and update explorer progression
+ */
+export async function syncMissionAndProgression(userId, cityName, missionTitle) {
+  if (!supabase) return;
+
+  try {
+    // 1. Get current city progress
+    const progress = await fetchCityProgress(userId);
+    const existingCity = progress.find(p => p.city_name === cityName);
+    const currentPercent = existingCity ? existingCity.exploration_percentage : 0;
+    const newPercent = Math.min(currentPercent + 33, 100);
+    await upsertCityProgress(userId, cityName, newPercent);
+
+    // 2. Fetch available missions for this city
+    const missions = await fetchMissions(cityName);
+    // Find matching or fallback to first
+    let mission = missions.find(m => m.title.toLowerCase().includes(missionTitle.toLowerCase()) || missionTitle.toLowerCase().includes(m.title.toLowerCase()));
+    if (!mission && missions.length > 0) {
+      mission = missions[0];
+    }
+    
+    if (mission) {
+      await completeMission(userId, mission.id);
+    }
+
+    // 3. Grant badge based on city and progress
+    const badges = await fetchAllBadges();
+    if (badges && badges.length > 0) {
+      let badgeName = null;
+      if (cityName === 'Cusco') badgeName = 'Cusco Conqueror';
+      else if (cityName === 'Lima') badgeName = 'Lima Foodie Elite';
+      else if (cityName === 'Puno') badgeName = 'Titicaca Mystic';
+      else if (cityName === 'Arequipa') badgeName = 'Colca Canyon Sentinel';
+      else if (cityName === 'Iquitos') badgeName = 'Amazon Survivor';
+      else if (cityName === 'Nazca') badgeName = 'Nazca Decoder';
+
+      // First mission badge
+      const userBadges = await fetchUserBadges(userId);
+      if (userBadges.length === 0) {
+        const firstStepsBadge = badges.find(b => b.name === 'First Steps');
+        if (firstStepsBadge) {
+          await grantBadge(userId, firstStepsBadge.id);
+        }
+      }
+
+      if (badgeName) {
+        const cityBadge = badges.find(b => b.name === badgeName);
+        const alreadyHasCityBadge = userBadges.some(ub => ub.badges?.name === badgeName);
+        if (cityBadge && !alreadyHasCityBadge) {
+          await grantBadge(userId, cityBadge.id);
+        }
+      }
+
+      if (newPercent === 100) {
+        const discovererBadge = badges.find(b => b.name === 'City Discoverer');
+        const alreadyHasDiscoverer = userBadges.some(ub => ub.badges?.name === 'City Discoverer');
+        if (discovererBadge && !alreadyHasDiscoverer) {
+          await grantBadge(userId, discovererBadge.id);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[IdentityAPI] syncMissionAndProgression error:', err);
+  }
+}
+

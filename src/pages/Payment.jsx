@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useStellarWallet } from '../hooks/useStellarWallet';
+import { useAuth } from '../hooks/useAuth';
 import { xpService } from '../services/xpService';
+import { syncMissionAndProgression } from '../services/identityApi';
 import * as StellarSdk from '@stellar/stellar-sdk';
 import PageHeader from '../components/PageHeader';
 import BottomNav from '../components/BottomNav';
@@ -10,6 +12,7 @@ export default function Payment() {
   const navigate = useNavigate();
   const location = useLocation();
   const { publicKey, connecting, connect, disconnect, sign } = useStellarWallet();
+  const { user: profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [txHash, setTxHash] = useState(null);
@@ -73,6 +76,11 @@ export default function Payment() {
       const xpResult = xpService.grantXp('mission_complete');
       if (xpResult && xpResult.leveledUp) {
         setLevelUpData(xpResult);
+      }
+
+      // Sync mission completion and city progress to Supabase
+      if (profile && profile.id) {
+        syncMissionAndProgression(profile.id, swarm.city || 'Cusco', swarm.name);
       }
 
     } catch (err) {

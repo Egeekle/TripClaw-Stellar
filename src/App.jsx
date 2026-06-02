@@ -14,6 +14,7 @@ const Vote = lazy(() => import('./pages/Vote'));
 const Passport = lazy(() => import('./pages/Passport'));
 const MatchExperience = lazy(() => import('./pages/MatchExperience'));
 const BiometricVerification = lazy(() => import('./pages/BiometricVerification'));
+const TravelerProfile = lazy(() => import('./pages/TravelerProfile'));
 
 // ── Error Boundary ──────────────────────────────────────────
 class ErrorBoundary extends Component {
@@ -93,6 +94,7 @@ function AnimatedRoutes() {
         {/* Public Routes */}
         <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
         <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
+        <Route path="/traveler/:nickname" element={<PageTransition><TravelerProfile /></PageTransition>} />
         
         {/* Protected Routes */}
         <Route path="/dashboard" element={<RequireAuth><PageTransition><Dashboard /></PageTransition></RequireAuth>} />

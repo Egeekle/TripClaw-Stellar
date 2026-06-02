@@ -5,25 +5,61 @@ import Logo from "../components/Logo";
 import PageHeader from "../components/PageHeader";
 import BottomNav from "../components/BottomNav";
 
-const badges = [
-  { id: 1, name: "Primer Camino", icon: "🏔️", unlocked: true },
-  { id: 2, name: "Guardián Inca", icon: "🦙", unlocked: true },
-  { id: 3, name: "Alma Andina", icon: "🌄", unlocked: false },
-  { id: 4, name: "Tejedor", icon: "🧵", unlocked: false },
-  { id: 5, name: "Pachamama", icon: "🌿", unlocked: true },
-  { id: 6, name: "Apu Sagrado", icon: "⛰️", unlocked: false },
-];
+const BADGE_EMOJIS = {
+  'First Steps': '🥾',
+  'City Discoverer': '🗺️',
+  'Cusco Conqueror': '🦙',
+  'Lima Foodie Elite': '🥘',
+  'Titicaca Mystic': '🌅',
+  'Amazon Survivor': '🐆',
+  'Nazca Decoder': '🏜️',
+  'Colca Canyon Sentinel': '🦅',
+  'Inca Trail Survivor': '⛰️',
+  'Apex Explorer': '🧬',
+  '7-Day Streak': '🔥',
+  '30-Day Legend': '🏆',
+  'Swarm Leader': '🛰️'
+};
 
-const visitedPlaces = [
-  { name: "Cusco", date: "MAYO 2026", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400", stampColor: "text-primary border-primary/60" },
-  { name: "Lima", date: "ABRIL 2026", image: "https://images.unsplash.com/photo-1531968455001-5c5272a41129?w=400", stampColor: "text-success border-success/60" },
-];
+const CITY_ASSETS = {
+  'Cusco': {
+    image: 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400',
+    stampColor: 'text-primary border-primary/60'
+  },
+  'Lima': {
+    image: 'https://images.unsplash.com/photo-1531968455001-5c5272a41129?w=400',
+    stampColor: 'text-success border-success/60'
+  },
+  'Puno': {
+    image: 'https://images.unsplash.com/photo-1542178652-320c89ba76bc?w=400',
+    stampColor: 'text-accent border-accent/60'
+  },
+  'Arequipa': {
+    image: 'https://images.unsplash.com/photo-1533221087851-bc2902347bde?w=400',
+    stampColor: 'text-secondary border-secondary/60'
+  },
+  'Iquitos': {
+    image: 'https://images.unsplash.com/photo-1517415413661-bc952ba5cbb9?w=400',
+    stampColor: 'text-success border-success/60'
+  },
+  'Nazca': {
+    image: 'https://images.unsplash.com/photo-1628148858807-6bb9fdf0dbb6?w=400',
+    stampColor: 'text-primary border-primary/60'
+  }
+};
+
+import { fetchAllBadges, fetchUserBadges, fetchCityProgress, fetchCompletedMissionsCount } from "../services/identityApi";
 
 export default function Passport() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user: profile } = useAuth();
   const [showNewBadge, setShowNewBadge] = useState(false);
+
+  const [dbBadges, setDbBadges] = useState([]);
+  const [dbCities, setDbCities] = useState([]);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [loadingDb, setLoadingDb] = useState(true);
 
   useEffect(() => {
     if (location.state?.newExperience) {
@@ -32,7 +68,71 @@ export default function Passport() {
     }
   }, [location.state]);
 
+  useEffect(() => {
+    if (!profile?.id) return;
+    
+    async function loadPassportData() {
+      setLoadingDb(true);
+      try {
+        const [allBadges, userBadges, userCities, mCount] = await Promise.all([
+          fetchAllBadges(),
+          fetchUserBadges(profile.id),
+          fetchCityProgress(profile.id),
+          fetchCompletedMissionsCount(profile.id)
+        ]);
+
+        // Map unlocked badges
+        const unlockedIds = new Set(userBadges.map(ub => ub.badge_id));
+        const mappedBadges = allBadges.map(b => ({
+          id: b.id,
+          name: b.name,
+          icon: BADGE_EMOJIS[b.name] || '🎖️',
+          unlocked: unlockedIds.has(b.id)
+        }));
+        setDbBadges(mappedBadges);
+
+        // Map visited cities
+        const mappedCities = userCities.map(c => {
+          const assets = CITY_ASSETS[c.city_name] || {
+            image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400',
+            stampColor: 'text-primary border-primary/60'
+          };
+          return {
+            name: c.city_name,
+            date: new Date(c.discovered_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase(),
+            image: assets.image,
+            stampColor: assets.stampColor
+          };
+        });
+        setDbCities(mappedCities);
+        setCompletedCount(mCount);
+      } catch (err) {
+        console.error("Failed to load passport data", err);
+      } finally {
+        setLoadingDb(false);
+      }
+    }
+
+    loadPassportData();
+  }, [profile]);
+
   if (!profile) return null;
+
+  const displayBadges = dbBadges.length > 0 ? dbBadges : [
+    { id: 1, name: "First Steps", icon: "🥾", unlocked: true },
+    { id: 2, name: "City Discoverer", icon: "🗺️", unlocked: true },
+    { id: 3, name: "Cusco Conqueror", icon: "🦙", unlocked: false },
+    { id: 4, name: "Lima Foodie Elite", icon: "🥘", unlocked: false },
+    { id: 5, name: "Titicaca Mystic", icon: "🌅", unlocked: true },
+    { id: 6, name: "Amazon Survivor", icon: "🐆", unlocked: false },
+  ];
+
+  const displayCities = dbCities.length > 0 ? dbCities : [
+    { name: "Cusco", date: "MAYO 2026", image: "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400", stampColor: "text-primary border-primary/60" },
+    { name: "Lima", date: "ABRIL 2026", image: "https://images.unsplash.com/photo-1531968455001-5c5272a41129?w=400", stampColor: "text-success border-success/60" },
+  ];
+
+  const displayCompletedCount = dbBadges.length > 0 ? completedCount : 3;
 
   return (
     <div className="min-h-screen pb-24 md:pb-6 bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-white transition-colors">
@@ -60,9 +160,19 @@ export default function Passport() {
               <h3 className="text-2xl font-black mb-1 text-slate-900 dark:text-white">
                 {profile.nickname || 'Explorador Anónimo'}
               </h3>
-              <p className="text-primary font-bold text-xs uppercase tracking-wider mb-6">
+              <p className="text-primary font-bold text-xs uppercase tracking-wider mb-2">
                 {profile.travelerType || 'Explorador'}
               </p>
+
+              {profile.nickname && (
+                <button
+                  onClick={() => navigate(`/traveler/@${profile.nickname}`)}
+                  className="mb-6 px-4 py-1.5 rounded-full border border-primary/30 text-primary text-[10px] uppercase font-black bg-primary/5 hover:bg-primary/10 transition-colors flex items-center gap-1.5"
+                >
+                  <span className="material-symbols-outlined text-[14px]">share</span>
+                  Ver Perfil Público
+                </button>
+              )}
 
               {/* Level Progress */}
               <div className="w-full max-w-xs mb-8">
@@ -84,16 +194,16 @@ export default function Passport() {
               {/* Stats Block */}
               <div className="w-full grid grid-cols-3 gap-2 bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-800">
                 <div className="text-center">
-                  <p className="text-2xl font-black text-primary leading-tight">2</p>
+                  <p className="text-2xl font-black text-primary leading-tight">{displayCities.length}</p>
                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Destinos</p>
                 </div>
                 <div className="text-center border-x border-slate-200 dark:border-slate-800">
-                  <p className="text-2xl font-black text-primary leading-tight">3</p>
+                  <p className="text-2xl font-black text-primary leading-tight">{displayCompletedCount}</p>
                   <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Misiones</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-2xl font-black text-primary leading-tight">4.9</p>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Rating</p>
+                  <p className="text-2xl font-black text-primary leading-tight">{profile.reputationScore || 100}</p>
+                  <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Confianza</p>
                 </div>
               </div>
 
@@ -110,11 +220,13 @@ export default function Passport() {
                   <span className="material-symbols-outlined text-secondary">military_tech</span>
                   Insignias de Viaje (NFTs)
                 </h4>
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">3 / 6</span>
+                <span className="text-xs font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+                  {displayBadges.filter(b => b.unlocked).length} / {displayBadges.length}
+                </span>
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {badges.map((badge) => (
+                {displayBadges.map((badge) => (
                   <div
                     key={badge.id}
                     className={`border rounded-2xl p-4 flex flex-col items-center justify-center gap-2 transition-all duration-300 ${
@@ -140,7 +252,7 @@ export default function Passport() {
               </h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {visitedPlaces.map((place, index) => (
+                {displayCities.map((place, index) => (
                   <div
                     key={index}
                     className="bg-white dark:bg-[#2b2724] border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm flex items-stretch p-3 gap-4 relative animate-in slide-in-from-bottom-2 duration-500"
