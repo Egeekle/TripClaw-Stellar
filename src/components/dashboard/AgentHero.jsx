@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Logo from '../Logo';
 
-export default function AgentHero({ status, isGatewayOnline }) {
+// PERFORMANCE: Memoizing AgentHero prevents unnecessary re-renders when the Dashboard
+// parent re-renders due to other state changes (like mission counts).
+const AgentHero = memo(function AgentHero({ status, isGatewayOnline }) {
   return (
     <section className="mt-4">
       <div className="relative group">
@@ -47,5 +49,7 @@ export default function AgentHero({ status, isGatewayOnline }) {
       </div>
     </section>
   );
-}
+});
+
+export default AgentHero;
 

@@ -1,11 +1,23 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+// PERFORMANCE: Move static navigation data outside the component to prevent redundant allocation on every render.
+const NAV_ITEMS = [
+  { label: 'Home', path: '/dashboard', icon: 'home' },
+  { label: 'Mapa Explorer', path: '/map', icon: 'explore' },
+  { label: 'Consola IA', path: '/console', icon: 'terminal' },
+  { label: 'Descubrir Match', path: '/match', icon: 'local_activity' },
+  { label: 'Pasaporte', path: '/passport', icon: 'badge' },
+  { label: 'Votación', path: '/vote', icon: 'how_to_vote' },
+];
+
+// PERFORMANCE: Memoizing PageHeader as it is a common layout element that doesn't
+// change often but is part of the main render tree.
+const PageHeader = memo(function PageHeader({
   title, 
   subtitle, 
   showBack = false, 
@@ -15,15 +27,6 @@ export default function PageHeader({
   const navigate = useNavigate();
   const location = useLocation();
   const { user: identity } = useAuth();
-
-  const navItems = [
-    { label: 'Home', path: '/dashboard', icon: 'home' },
-    { label: 'Mapa Explorer', path: '/map', icon: 'explore' },
-    { label: 'Consola IA', path: '/console', icon: 'terminal' },
-    { label: 'Descubrir Match', path: '/match', icon: 'local_activity' },
-    { label: 'Pasaporte', path: '/passport', icon: 'badge' },
-    { label: 'Votación', path: '/vote', icon: 'how_to_vote' },
-  ];
 
   const handleBack = () => {
     if (backTo) {
@@ -65,7 +68,7 @@ export default function PageHeader({
         {/* Center: Desktop Navigation Bar */}
         {showNav && (
           <nav className="hidden md:flex items-center gap-1 lg:gap-3">
-            {navItems.map((item, idx) => {
+            {NAV_ITEMS.map((item, idx) => {
               const isActive = location.pathname === item.path;
               return (
                 <button
@@ -114,4 +117,6 @@ export default function PageHeader({
       </div>
     </header>
   );
-}
+});
+
+export default PageHeader;
