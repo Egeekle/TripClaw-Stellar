@@ -31,15 +31,29 @@ export function useAuth() {
   // Load local identity as immediate state
   const getLocalProfile = () => {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEYS.IDENTITY) || 'null');
+      const data = localStorage.getItem(STORAGE_KEYS.IDENTITY);
+      if (!data || data === 'undefined') return null;
+      return JSON.parse(data);
     } catch {
       return null;
     }
   };
 
   useEffect(() => {
+    // ⚡ Bolt: Added check for null supabase to avoid hanging in loading state
+    if (!supabase) {
+      console.log('[useAuth] Supabase client is null, falling back to local mode');
+      const local = getLocalProfile();
+      if (local && local.nickname) {
+        setUser(local);
+        setSession({ user: local }); // Mock session for local mode
+      }
+      setLoading(false);
+      return;
+    }
+
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -48,10 +62,18 @@ export function useAuth() {
         if (local) setUser(local);
         setLoading(false);
       }
+    }).catch(err => {
+      console.error('[useAuth] getSession error', err);
+      const local = getLocalProfile();
+      if (local) {
+        setUser(local);
+        setSession({ user: local });
+      }
+      setLoading(false);
     });
 
     // 2. Listen for auth changes
-    const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -59,7 +81,7 @@ export function useAuth() {
         setUser(null);
         setLoading(false);
       }
-    }) || { data: { subscription: null } };
+    });
 
     return () => subscription?.unsubscribe();
   }, []);
