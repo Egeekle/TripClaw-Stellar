@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-export default function Logo({ className = "w-10 h-10", showText = false, textClassName = "text-xl" }) {
+function Logo({ className = "w-10 h-10", showText = false, textClassName = "text-xl" }) {
   return (
     <div className={`flex items-center gap-3 ${className.includes('w-full') ? 'flex-col' : ''}`}>
       <svg 
@@ -76,4 +76,5 @@ export default function Logo({ className = "w-10 h-10", showText = false, textCl
   );
 }
 
+export default memo(Logo);
 
