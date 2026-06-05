@@ -111,6 +111,7 @@ export default function Map() {
             <MapView 
               swarms={filteredSwarms}
               agents={agents}
+              interactions={interactions}
               selectedCity={selectedCity}
               onCityClick={handleCityClick}
             />
