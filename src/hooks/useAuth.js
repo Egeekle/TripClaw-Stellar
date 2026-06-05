@@ -38,8 +38,17 @@ export function useAuth() {
   };
 
   useEffect(() => {
+    // Fallback if Supabase client is missing or disconnected
+    if (!supabase) {
+      console.log('⚡ Auth: No Supabase client detected. Using local fallback.');
+      const local = getLocalProfile();
+      if (local) setUser(local);
+      setLoading(false);
+      return;
+    }
+
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -48,10 +57,15 @@ export function useAuth() {
         if (local) setUser(local);
         setLoading(false);
       }
+    }).catch(err => {
+      console.warn('⚡ Auth: Session check failed. Falling back to local identity.', err);
+      const local = getLocalProfile();
+      if (local) setUser(local);
+      setLoading(false);
     });
 
     // 2. Listen for auth changes
-    const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -59,7 +73,7 @@ export function useAuth() {
         setUser(null);
         setLoading(false);
       }
-    }) || { data: { subscription: null } };
+    });
 
     return () => subscription?.unsubscribe();
   }, []);
@@ -116,7 +130,7 @@ export function useAuth() {
     loading,
     updateProfile,
     signOut,
-    isAuthenticated: !!session?.user
+    isAuthenticated: !!session?.user || (user !== null && !supabase)
   };
 
 }

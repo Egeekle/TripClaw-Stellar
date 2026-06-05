@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Logo from '../Logo';
 
-export default function AgentHero({ status, isGatewayOnline }) {
+/**
+ * PERFORMANCE: React.memo prevents the AgentHero component from re-rendering
+ * when the Dashboard parent re-renders (e.g., due to the LiveFeed timer),
+ * as long as the status and isGatewayOnline props remain the same.
+ */
+const AgentHero = memo(function AgentHero({ status, isGatewayOnline }) {
   return (
     <section className="mt-4">
       <div className="relative group">
@@ -47,5 +52,7 @@ export default function AgentHero({ status, isGatewayOnline }) {
       </div>
     </section>
   );
-}
+});
+
+export default AgentHero;
 
