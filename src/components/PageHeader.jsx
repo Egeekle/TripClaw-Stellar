@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+/**
+ * ⚡ Bolt: Wrapped PageHeader in React.memo. This is a heavy layout component
+ * that should not re-render unless its own props or context dependencies change.
+ */
+const PageHeader = memo(function PageHeader({
   title, 
   subtitle, 
   showBack = false, 
@@ -114,4 +118,6 @@ export default function PageHeader({
       </div>
     </header>
   );
-}
+});
+
+export default PageHeader;
