@@ -39,7 +39,14 @@ export function useAuth() {
 
   useEffect(() => {
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
+    if (!supabase) {
+      const local = getLocalProfile();
+      if (local) setUser(local);
+      setLoading(false);
+      return;
+    }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
@@ -116,7 +123,7 @@ export function useAuth() {
     loading,
     updateProfile,
     signOut,
-    isAuthenticated: !!session?.user
+    isAuthenticated: !!session?.user || (!supabase && !!user)
   };
 
 }
