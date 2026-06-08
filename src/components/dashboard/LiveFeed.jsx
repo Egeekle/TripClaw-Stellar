@@ -1,6 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useOpenClaw } from '../../context/OpenClawContext';
 
-export default function LiveFeed({ events }) {
+/**
+ * ⚡ PERFORMANCE: Static data moved outside component to prevent
+ * recreation on every render.
+ */
+const DEMO_INTENTS = [
+  { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
+  { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
+  { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
+  { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
+  { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
+];
+
+export default function LiveFeed() {
+  const { agentEvents, isGatewayOnline } = useOpenClaw();
+
+  /**
+   * ⚡ PERFORMANCE: High-frequency state colocated in LiveFeed.
+   * Moving this from Dashboard.jsx prevents the entire dashboard (including
+   * heavy components like AgentHero and PageHeader) from re-rendering every 3.5s.
+   */
+  const [demoEvents, setDemoEvents] = useState([]);
+
+  useEffect(() => {
+    if (isGatewayOnline && agentEvents.length > 0) return;
+
+    const interval = setInterval(() => {
+      const randomIntent = DEMO_INTENTS[Math.floor(Math.random() * DEMO_INTENTS.length)];
+      setDemoEvents((prev) => [
+        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
+        ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
+      ]);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isGatewayOnline, agentEvents]);
+
+  const events = isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents;
+
   return (
     <section className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
