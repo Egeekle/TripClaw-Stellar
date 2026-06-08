@@ -39,16 +39,32 @@ export function useAuth() {
 
   useEffect(() => {
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
+    const initAuth = async () => {
+      if (!supabase) {
+        const local = getLocalProfile();
+        if (local) {
+          setUser(local);
+          setSession({ user: local });
+        }
+        setLoading(false);
+        return;
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
       setSession(session);
       if (session?.user) {
         syncProfile(session.user);
       } else {
         const local = getLocalProfile();
-        if (local) setUser(local);
+        if (local) {
+          setUser(local);
+          setSession({ user: local });
+        }
         setLoading(false);
       }
-    });
+    };
+
+    initAuth();
 
     // 2. Listen for auth changes
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
