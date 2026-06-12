@@ -1,6 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function LiveFeed({ events }) {
+/**
+ * ⚡ Bolt: PERFORMANCE
+ * Static demo data moved outside the component to prevent redundant allocation
+ * and reference changes on every render cycle.
+ */
+const DEMO_INTENTS = [
+  { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
+  { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
+  { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
+  { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
+  { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
+];
+
+export default function LiveFeed({ agentEvents = [], isGatewayOnline }) {
+  /**
+   * ⚡ Bolt: PERFORMANCE - State Colocation
+   * Moving high-frequency demo interval state (updates every 3.5s) from
+   * the parent Dashboard to this child component. This prevents the entire
+   * Dashboard (and its other children) from re-rendering when only
+   * the feed update is needed.
+   */
+  const [demoEvents, setDemoEvents] = useState([]);
+
+  useEffect(() => {
+    if (isGatewayOnline && agentEvents.length > 0) return;
+
+    const interval = setInterval(() => {
+      const randomIntent = DEMO_INTENTS[Math.floor(Math.random() * DEMO_INTENTS.length)];
+      setDemoEvents((prev) => [
+        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
+        ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
+      ]);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isGatewayOnline, agentEvents]);
+
+  const activeEvents = isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents;
+
   return (
     <section className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
@@ -14,13 +52,13 @@ export default function LiveFeed({ events }) {
       </div>
 
       <div className="space-y-3">
-        {events.length === 0 ? (
+        {activeEvents.length === 0 ? (
           <div className="p-8 text-center bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
             <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">stream</span>
             <p className="text-sm text-slate-400 font-medium">Esperando datos de intención del enjambre...</p>
           </div>
         ) : (
-          events.map((event) => (
+          activeEvents.map((event) => (
             <div 
               key={event.id} 
               className="group p-4 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-md transition-all flex items-start gap-4 animate-in slide-in-from-bottom-2 duration-300"
@@ -47,4 +85,3 @@ export default function LiveFeed({ events }) {
     </section>
   );
 }
-
