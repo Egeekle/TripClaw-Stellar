@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+/**
+ * PERFORMANCE: Memoized layout component.
+ * Prevents unnecessary re-renders of the navigation when parent state
+ * changes (like the LiveFeed simulation) that don't affect its props.
+ */
+const BottomNav = memo(function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +52,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;

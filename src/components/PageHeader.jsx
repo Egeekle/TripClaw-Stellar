@@ -1,11 +1,16 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+/**
+ * PERFORMANCE: Memoized layout component.
+ * Prevents unnecessary re-renders of the header when parent state
+ * changes (like the LiveFeed simulation) that don't affect its props.
+ */
+const PageHeader = memo(function PageHeader({
   title, 
   subtitle, 
   showBack = false, 
@@ -114,4 +119,6 @@ export default function PageHeader({
       </div>
     </header>
   );
-}
+});
+
+export default PageHeader;
