@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { memo } from 'react';
 import Logo from '../Logo';
 
-export default function AgentHero({ status, isGatewayOnline }) {
+/**
+ * PERFORMANCE: Wrapped AgentHero in React.memo to prevent unnecessary re-renders.
+ * Since this is a visually complex component with animations, shielding it
+ * from parent state updates that don't affect its props is a significant win.
+ */
+const AgentHero = memo(function AgentHero({ status, isGatewayOnline }) {
   return (
     <section className="mt-4">
       <div className="relative group">
@@ -47,5 +52,6 @@ export default function AgentHero({ status, isGatewayOnline }) {
       </div>
     </section>
   );
-}
+});
 
+export default AgentHero;

@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+/**
+ * PERFORMANCE: BottomNav is now memoized to avoid re-renders when parent pages
+ * update their local state. This ensures stable mobile navigation.
+ */
+const BottomNav = memo(function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +51,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;
