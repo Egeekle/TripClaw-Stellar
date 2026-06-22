@@ -5,7 +5,11 @@ import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+/**
+ * PERFORMANCE: Memoizing PageHeader to prevent re-renders when parent Dashboard re-renders
+ * but props remain shallowly equal.
+ */
+const PageHeader = React.memo(function PageHeader({
   title, 
   subtitle, 
   showBack = false, 
@@ -114,4 +118,6 @@ export default function PageHeader({
       </div>
     </header>
   );
-}
+});
+
+export default PageHeader;
