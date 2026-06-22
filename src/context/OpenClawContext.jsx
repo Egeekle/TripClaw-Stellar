@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   fetchAgentStatus,
   fetchAvailableTools,
@@ -269,7 +269,12 @@ export function OpenClawProvider({ children }) {
     return () => clearThinkingTimeout();
   }, [clearThinkingTimeout]);
 
-  const value = {
+  /**
+   * PERFORMANCE: Memoizing context value to prevent unnecessary re-renders of all consumer components.
+   * Without this, every time any state in OpenClawProvider changes, all consumers (like the Dashboard)
+   * would re-render even if they only depend on a subset of the context.
+   */
+  const value = useMemo(() => ({
     status,
     wsStatus,
     tools,
@@ -281,7 +286,17 @@ export function OpenClawProvider({ children }) {
     runSkill,
     isConnected: wsStatus === 'connected',
     isGatewayOnline: status?.active === true,
-  };
+  }), [
+    status,
+    wsStatus,
+    tools,
+    messages,
+    agentEvents,
+    isThinking,
+    send,
+    pair,
+    runSkill
+  ]);
 
   return (
     <OpenClawContext.Provider value={value}>

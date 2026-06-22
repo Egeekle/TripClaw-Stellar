@@ -1,7 +1,11 @@
 import React from 'react';
 import Logo from '../Logo';
 
-export default function AgentHero({ status, isGatewayOnline }) {
+/**
+ * PERFORMANCE: Memoizing AgentHero to prevent re-renders when parent Dashboard re-renders
+ * but props remain shallowly equal.
+ */
+const AgentHero = React.memo(function AgentHero({ status, isGatewayOnline }) {
   return (
     <section className="mt-4">
       <div className="relative group">
@@ -47,5 +51,7 @@ export default function AgentHero({ status, isGatewayOnline }) {
       </div>
     </section>
   );
-}
+});
+
+export default AgentHero;
 

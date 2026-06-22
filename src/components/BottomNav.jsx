@@ -1,7 +1,11 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+/**
+ * PERFORMANCE: Memoizing BottomNav to prevent re-renders when parent Dashboard re-renders.
+ * It uses useLocation internally, so it will still re-render on route changes.
+ */
+const BottomNav = React.memo(function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +51,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;
