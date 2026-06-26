@@ -5,13 +5,14 @@ import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+// PERFORMANCE: Memoize layout component to prevent re-renders on every Dashboard state update
+const PageHeader = React.memo(({
   title, 
   subtitle, 
   showBack = false, 
   backTo = null, 
   showNav = true 
-}) {
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user: identity } = useAuth();
@@ -114,4 +115,6 @@ export default function PageHeader({
       </div>
     </header>
   );
-}
+});
+
+export default PageHeader;
