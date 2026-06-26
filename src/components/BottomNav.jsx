@@ -1,7 +1,8 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+// PERFORMANCE: Memoize fixed navigation component
+const BottomNav = React.memo(() => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +48,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;
