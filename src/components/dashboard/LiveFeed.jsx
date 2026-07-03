@@ -1,6 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect, memo } from 'react';
 
-export default function LiveFeed({ events }) {
+const DEMO_INTENTS = [
+  { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
+  { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
+  { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
+  { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
+  { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
+];
+
+const LiveFeed = memo(function LiveFeed({ agentEvents = [], isGatewayOnline = false }) {
+  // Simulated live feed when gateway is offline (demo mode)
+  const [demoEvents, setDemoEvents] = useState([]);
+
+  useEffect(() => {
+    if (isGatewayOnline && agentEvents.length > 0) return;
+
+    const interval = setInterval(() => {
+      const randomIntent = DEMO_INTENTS[Math.floor(Math.random() * DEMO_INTENTS.length)];
+      setDemoEvents((prev) => [
+        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
+        ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
+      ]);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isGatewayOnline, agentEvents]);
+
+  const events = isGatewayOnline && agentEvents.length > 0 ? agentEvents : demoEvents;
+
   return (
     <section className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
@@ -46,5 +73,7 @@ export default function LiveFeed({ events }) {
       </div>
     </section>
   );
-}
+});
+
+export default LiveFeed;
 
