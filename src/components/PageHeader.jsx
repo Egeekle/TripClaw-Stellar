@@ -5,7 +5,7 @@ import Logo from './Logo';
 import WalletWidget from './WalletWidget';
 import { Badge } from './ui';
 
-export default function PageHeader({ 
+function PageHeader({
   title, 
   subtitle, 
   showBack = false, 
@@ -115,3 +115,5 @@ export default function PageHeader({
     </header>
   );
 }
+
+export default React.memo(PageHeader);
