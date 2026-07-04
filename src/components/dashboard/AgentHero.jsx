@@ -1,7 +1,7 @@
 import React from 'react';
 import Logo from '../Logo';
 
-export default function AgentHero({ status, isGatewayOnline }) {
+function AgentHero({ status, isGatewayOnline }) {
   return (
     <section className="mt-4">
       <div className="relative group">
@@ -49,3 +49,4 @@ export default function AgentHero({ status, isGatewayOnline }) {
   );
 }
 
+export default React.memo(AgentHero);
