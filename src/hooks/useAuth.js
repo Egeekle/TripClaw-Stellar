@@ -39,16 +39,23 @@ export function useAuth() {
 
   useEffect(() => {
     // 1. Get initial session
-    supabase?.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        syncProfile(session.user);
-      } else {
-        const local = getLocalProfile();
-        if (local) setUser(local);
-        setLoading(false);
-      }
-    });
+    if (supabase) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        setSession(session);
+        if (session?.user) {
+          syncProfile(session.user);
+        } else {
+          const local = getLocalProfile();
+          if (local) setUser(local);
+          setLoading(false);
+        }
+      });
+    } else {
+      // Offline/Demo mode support
+      const local = getLocalProfile();
+      if (local) setUser(local);
+      setLoading(false);
+    }
 
     // 2. Listen for auth changes
     const { data: { subscription } } = supabase?.auth.onAuthStateChange((_event, session) => {
@@ -116,7 +123,7 @@ export function useAuth() {
     loading,
     updateProfile,
     signOut,
-    isAuthenticated: !!session?.user
+    isAuthenticated: !!(session?.user || user)
   };
 
 }
