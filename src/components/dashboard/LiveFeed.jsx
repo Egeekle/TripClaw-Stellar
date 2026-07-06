@@ -1,6 +1,35 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
-export default function LiveFeed({ events }) {
+// PERFORMANCE: Pushed demo events state down to LiveFeed to prevent
+// re-rendering the entire Dashboard every 3.5 seconds.
+export default function LiveFeed({ events: externalEvents, isGatewayOnline }) {
+  const [demoEvents, setDemoEvents] = useState([]);
+
+  useEffect(() => {
+    // Only run demo if gateway is offline and no external events
+    if (isGatewayOnline && (externalEvents?.length > 0)) return;
+
+    const intents = [
+      { agent: 'Carlos', action: 'quiere hacer trekking mañana en el Valle Sagrado', type: 'Adventure' },
+      { agent: 'Ana & Luis', action: 'buscan grupo para comer ceviche en Miraflores', type: 'Food' },
+      { agent: '2 Viajeros', action: 'van a surfear en Costa Verde, queda 1 cupo', type: 'Sports' },
+      { agent: 'Elena', action: 'busca compartir taxi para ir al Cañón del Colca', type: 'Transport' },
+      { agent: 'Marc', action: 'busca compañero para guía privado en Machu Picchu', type: 'Culture' },
+    ];
+
+    const interval = setInterval(() => {
+      const randomIntent = intents[Math.floor(Math.random() * intents.length)];
+      setDemoEvents((prev) => [
+        { id: Date.now(), agent: randomIntent.agent, action: randomIntent.action, time: 'Hace un momento' },
+        ...prev.map((e) => ({ ...e, time: e.time === 'Hace un momento' ? 'Hace 1m' : e.time })).slice(0, 4),
+      ]);
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [isGatewayOnline, externalEvents]);
+
+  const events = (externalEvents && externalEvents.length > 0) ? externalEvents : demoEvents;
+
   return (
     <section className="space-y-4 pb-8">
       <div className="flex items-center justify-between">
