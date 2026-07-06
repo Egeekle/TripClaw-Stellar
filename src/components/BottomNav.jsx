@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-export default function BottomNav() {
+// PERFORMANCE: Memoized to prevent re-renders when parent Dashboard updates.
+// Note: useLocation() will still trigger a re-render if the route changes,
+// but it shields the component from unrelated Dashboard state updates.
+const BottomNav = memo(function BottomNav() {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,4 +50,6 @@ export default function BottomNav() {
       })}
     </nav>
   );
-}
+});
+
+export default BottomNav;
